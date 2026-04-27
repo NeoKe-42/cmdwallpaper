@@ -1,158 +1,66 @@
-﻿# System info collector for terminal-style Wallpaper Engine wallpaper
-# Collects: CPU, GPU, RAM, disk, OS, network, audio volume, now playing
-
-param(
-    [string]$OutputFile = "system_info.json"
-)
+﻿# System info collector for Wallpaper Engine terminal wallpaper
+param([string]$OutputFile = "system_info.json")
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 
-# Load compiled C# helper (CoreAudio + now-playing)
-$dllPath = Join-Path $scriptDir "media_helper.dll"
-if (Test-Path $dllPath) {
-    try { Add-Type -Path $dllPath -ErrorAction Stop | Out-Null } catch { }
-}
+# Load helper DLL (WASAPI EQ + now-playing)
+$dll = Join-Path $scriptDir "media_helper.dll"
+if (Test-Path $dll) { try { Add-Type -Path $dll -ErrorAction Stop | Out-Null; [MediaHelper]::StartMeter($scriptDir) } catch {} }
 
-# ============================================================
-# Core system info (CPU, GPU, RAM, disk, OS, motherboard)
-# ============================================================
-
-function Get-SystemInfo {
+try {
     $info = @{}
-
     $info["timestamp"] = (Get-Date).ToUniversalTime().ToString("o")
+    $info["system"] = @{ "hostname" = [System.Environment]::MachineName; "username" = [System.Environment]::UserName }
 
-    $info["system"] = @{
-        "hostname" = [System.Environment]::MachineName
-        "username" = [System.Environment]::UserName
-    }
+    $os = Get-CimInstance Win32_OperatingSystem
+    $info["os"] = @{ "name" = $os.Caption; "version" = $os.Version; "build" = $os.BuildNumber; "architecture" = $os.OSArchitecture }
+    $t = [math]::Round($os.TotalVisibleMemorySize/1048576, 2); $f = [math]::Round($os.FreePhysicalMemory/1048576, 2); $u = $t-$f
+    $info["memory"] = @{ "total_gb"=$t; "used_gb"=$u; "available_gb"=$f; "percent"=[math]::Round($u/$t*100,1) }
 
-    $osInfo = Get-CimInstance Win32_OperatingSystem
-    $info["os"] = @{
-        "name" = $osInfo.Caption
-        "version" = $osInfo.Version
-        "build" = $osInfo.BuildNumber
-        "architecture" = $osInfo.OSArchitecture
-    }
+    $c = Get-CimInstance Win32_Processor
+    $info["cpu"] = @{ "name"=$c.Name.Trim(); "cores"=$c.NumberOfCores; "threads"=$c.NumberOfLogicalProcessors; "frequency_mhz"=$c.MaxClockSpeed }
 
-    $totalMem = [math]::Round($osInfo.TotalVisibleMemorySize / 1024 / 1024, 2)
-    $freeMem = [math]::Round($osInfo.FreePhysicalMemory / 1024 / 1024, 2)
-    $usedMem = $totalMem - $freeMem
-    $memPercent = [math]::Round(($usedMem / $totalMem) * 100, 1)
-
-    $info["memory"] = @{
-        "total_gb" = $totalMem
-        "used_gb" = $usedMem
-        "available_gb" = $freeMem
-        "percent" = $memPercent
-    }
-
-    $cpuInfo = Get-CimInstance Win32_Processor
-    $info["cpu"] = @{
-        "name" = $cpuInfo.Name.Trim()
-        "cores" = $cpuInfo.NumberOfCores
-        "threads" = $cpuInfo.NumberOfLogicalProcessors
-        "frequency_mhz" = $cpuInfo.MaxClockSpeed
-    }
-
-    $gpuInfo = Get-CimInstance Win32_VideoController
-    $info["gpu"] = @()
-    foreach ($gpu in $gpuInfo) { $info["gpu"] += $gpu.Name }
+    $info["gpu"] = @(); foreach ($g in (Get-CimInstance Win32_VideoController)) { $info["gpu"] += $g.Name }
 
     $info["disk"] = @{}
-    $disks = Get-Volume | Where-Object { $_.DriveLetter -and $_.SizeRemaining -gt 0 }
-    foreach ($disk in $disks) {
-        $letter = $disk.DriveLetter
-        $totalSize = [math]::Round($disk.Size / 1GB, 2)
-        $freeSize = [math]::Round($disk.SizeRemaining / 1GB, 2)
-        $usedSize = $totalSize - $freeSize
-        $percent = if ($totalSize -gt 0) { [math]::Round(($usedSize / $totalSize) * 100, 1) } else { 0 }
-        $info["disk"]["${letter}:"] = @{
-            "mount" = "${letter}:\"
-            "total_gb" = $totalSize
-            "used_gb" = $usedSize
-            "free_gb" = $freeSize
-            "percent" = $percent
-        }
+    Get-Volume | Where-Object { $_.DriveLetter -and $_.SizeRemaining -gt 0 } | ForEach-Object {
+        $l=$_.DriveLetter; $ts=[math]::Round($_.Size/1GB,2); $fs=[math]::Round($_.SizeRemaining/1GB,2); $us=$ts-$fs
+        $pct=if($ts-gt0){[math]::Round($us/$ts*100,1)}else{0}
+        $info["disk"]["${l}:"] = @{ "mount"="${l}:\"; "total_gb"=$ts; "used_gb"=$us; "free_gb"=$fs; "percent"=$pct }
     }
 
-    $mbInfo = Get-CimInstance Win32_BaseBoard
-    $info["motherboard"] = "$($mbInfo.Manufacturer) $($mbInfo.Product)"
+    $mb = Get-CimInstance Win32_BaseBoard; $info["motherboard"] = "$($mb.Manufacturer) $($mb.Product)"
 
-    return $info
-}
-
-# ============================================================
-# Network: active IPv4 address
-# ============================================================
-
-function Get-NetworkInfo {
     try {
         $ip = Get-NetIPAddress -AddressFamily IPv4 -ErrorAction Stop |
             Where-Object { $_.InterfaceAlias -notlike '*Loopback*' -and $_.AddressState -eq 'Preferred' } |
-            Sort-Object -Property { $_.InterfaceMetric -as [int] } |
-            Select-Object -First 1
-        if ($ip) { return @{ "ipv4" = $ip.IPAddress; "interface" = $ip.InterfaceAlias } }
-    } catch { }
-    return @{ "ipv4" = $null; "interface" = $null }
-}
+            Sort-Object -Property { $_.InterfaceMetric -as [int] } | Select-Object -First 1
+        if ($ip) { $info["network"] = @{ "ipv4"=$ip.IPAddress; "interface"=$ip.InterfaceAlias } }
+    } catch {}
 
-# ============================================================
-# Audio volume via compiled DLL (CoreAudio COM)
-# ============================================================
-
-function Get-AudioVolume {
+    # Audio EQ from WASAPI loopback
     try {
-        $muted = $false
-        $vol = [MediaHelper]::GetMasterVolume([ref] $muted)
-        $peak = [MediaHelper]::GetAudioPeakLevel()
-        if ($vol -ge 0) {
-            return @{ "volume_percent" = $vol; "muted" = $muted; "peak" = $peak }
-        }
-    } catch { }
-    return @{ "volume_percent" = $null; "muted" = $null; "peak" = $null }
-}
+        $muted=$false; $vol=[MediaHelper]::GetMasterVolume([ref]$muted)
+        $info["audio"]=@{ "volume"=$vol; "muted"=$muted; "eq_bass"=[math]::Round([MediaHelper]::GetEQBass(),1); "eq_mid"=[math]::Round([MediaHelper]::GetEQMid(),1); "eq_treble"=[math]::Round([MediaHelper]::GetEQTreble(),1) }
+    } catch {}
 
-# ============================================================
-# Now playing via window title parsing (compiled DLL)
-# ============================================================
+    # Now playing (window title)
+    $title=$null; $artist=$null; $album=$null
+    $src = [MediaHelper]::GetNowPlaying([ref]$title, [ref]$artist, [ref]$album)
+    if ($src) {
+        $info["now_playing"] = @{ "status"="playing" }
+        if ($title)  { $info["now_playing"]["title"] = $title }
+        if ($artist) { $info["now_playing"]["artist"] = $artist }
+        if ($album)  { $info["now_playing"]["album_title"] = $album }
+        $info["now_playing"]["source"] = $src
+    } else {
+        $info["now_playing"] = @{ "status"="no_media" }
+    }
 
-function Get-NowPlaying {
-    $result = @{ "status" = "no_media" }
-    try {
-        $title = $null; $artist = $null; $album = $null; $pos = -1.0; $dur = -1.0
-        $source = [MediaHelper]::GetNowPlayingInfo([ref] $title, [ref] $artist, [ref] $album, [ref] $pos, [ref] $dur)
-        if ($source) {
-            $result["status"] = "playing"
-            if ($title) { $result["title"] = $title }
-            if ($artist) { $result["artist"] = $artist }
-            if ($album) { $result["album_title"] = $album }
-            $result["source"] = $source
-        }
-    } catch { }
-    return $result
-}
-
-# ============================================================
-# Main: collect all info and write JSON
-# ============================================================
-
-try {
-    $sysInfo = Get-SystemInfo
-    $sysInfo["network"] = Get-NetworkInfo
-    $sysInfo["audio"] = Get-AudioVolume
-    $sysInfo["now_playing"] = Get-NowPlaying
-
-    $json = $sysInfo | ConvertTo-Json -Depth 10
-
-    $tmpFile = $OutputFile + ".tmp"
-    $utf8BOM = New-Object System.Text.UTF8Encoding($true)
-    [System.IO.File]::WriteAllText($tmpFile, $json, $utf8BOM)
-    Move-Item -Path $tmpFile -Destination $OutputFile -Force
-
-    Write-Host "OK - System info saved to $OutputFile"
-}
-catch {
-    Write-Host "Error: $_"
-    exit 1
-}
+    $json = $info | ConvertTo-Json -Depth 10
+    $tmp = $OutputFile + ".tmp"
+    $utf8 = New-Object System.Text.UTF8Encoding($true)
+    [System.IO.File]::WriteAllText($tmp, $json, $utf8)
+    Move-Item -Path $tmp -Destination $OutputFile -Force
+    Write-Host "OK - $OutputFile"
+} catch { Write-Host "Error: $_"; exit 1 }

@@ -3,7 +3,8 @@
     "allow": [
       "Bash(powershell -NoProfile -ExecutionPolicy Bypass -File get_system_info.ps1)",
       "Bash(timeout 3 powershell -NoProfile -ExecutionPolicy Bypass -File system_info_updater.ps1)",
-      "Bash(powershell *)"
+      "Bash(powershell *)",
+      "Bash(wscript.exe *)"
     ]
   }
 }

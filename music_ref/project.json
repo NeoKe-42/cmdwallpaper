@@ -1,0 +1,779 @@
+{
+	"approved" : true,
+	"contentrating" : "Everyone",
+	"description" : "4K Resolution Wallpaper. It has several features, including:\r\n\r\n[list]\r\n[*]Language Options: Portuguese, English, Russian and Japanese (With possibly more to come!)\r\n[*]Customizable System Information\r\n[*]Theme Option: Windows 11, Windows 10, Ubuntu, Pop!_OS and macOS\r\n[*]Background Theme Option: Light, Dark, Full Dark and Aperture Science\r\n[*]Custom System Logo\r\n[*]5 Individual Clocks and Timers\r\n[*]Ascii Album Cover With Resolution Slider and Grayscale Cover Mode\r\n[*]Audio Responsive Effects\r\n[*]Media Info Visualizer\r\n[*]VHS mode\r\n[/list]\r\n\r\nDisclaimer: If you don't like the BSOD screen, you can change the values or just turn it off in the settings.\r\n\r\n[i] Note: Translations may contain errors. Any feedback or suggestions are welcome! [/i]",
+	"file" : "scene.json",
+	"general" : 
+	{
+		"properties" : 
+		{
+			"_12hourformat" : 
+			{
+				"index" : 41,
+				"order" : 141,
+				"text" : "12 Hour Format",
+				"type" : "bool",
+				"value" : false
+			},
+			"aparncia" : 
+			{
+				"index" : 1,
+				"order" : 101,
+				"text" : "General",
+				"type" : "group",
+				"value" : ""
+			},
+			"appearence" : 
+			{
+				"index" : 6,
+				"order" : 106,
+				"text" : "Appearence",
+				"type" : "group",
+				"value" : ""
+			},
+			"bigcoverartresolution" : 
+			{
+				"condition" : "fontsize.value == 9",
+				"fraction" : true,
+				"index" : 24,
+				"max" : 0.05,
+				"min" : 0.01,
+				"order" : 124,
+				"precision" : 4,
+				"step" : 0.001,
+				"text" : "Big Cover Art Resolution",
+				"type" : "slider",
+				"value" : 0.0188
+			},
+			"bsodchance" : 
+			{
+				"fraction" : false,
+				"index" : 74,
+				"max" : 100,
+				"min" : 1,
+				"order" : 174,
+				"text" : "Chance (%)",
+				"type" : "slider",
+				"value" : 15
+			},
+			"clock0" : 
+			{
+				"index" : 42,
+				"order" : 142,
+				"text" : "Clock 0",
+				"type" : "bool",
+				"value" : true
+			},
+			"clock1" : 
+			{
+				"index" : 45,
+				"order" : 145,
+				"text" : "Clock 1",
+				"type" : "bool",
+				"value" : true
+			},
+			"clock2" : 
+			{
+				"index" : 48,
+				"order" : 148,
+				"text" : "Clock 2",
+				"type" : "bool",
+				"value" : true
+			},
+			"clock3" : 
+			{
+				"index" : 51,
+				"order" : 151,
+				"text" : "Clock 3",
+				"type" : "bool",
+				"value" : false
+			},
+			"clock4" : 
+			{
+				"index" : 54,
+				"order" : 154,
+				"text" : "Clock 4",
+				"type" : "bool",
+				"value" : false
+			},
+			"cpu" : 
+			{
+				"index" : 30,
+				"order" : 130,
+				"text" : "CPU",
+				"type" : "textinput",
+				"value" : "AMD Ryzen 5 3600 6-Core Processor"
+			},
+			"custombackgroundimage" : 
+			{
+				"condition" : "custombgimage.value == true",
+				"index" : 19,
+				"order" : 119,
+				"text" : "Custom Background Image",
+				"type" : "scenetexture",
+				"value" : ""
+			},
+			"custombgcolor" : 
+			{
+				"condition" : "theme.value == 4",
+				"index" : 16,
+				"order" : 116,
+				"text" : "Background Color",
+				"type" : "color",
+				"value" : "0 0 0"
+			},
+			"custombgimage" : 
+			{
+				"index" : 18,
+				"order" : 118,
+				"text" : "Custom Background Image",
+				"type" : "bool",
+				"value" : false
+			},
+			"customkernel" : 
+			{
+				"condition" : "logo.value == 1",
+				"index" : 35,
+				"order" : 135,
+				"text" : "[Custom] Kernel",
+				"type" : "textinput",
+				"value" : "Custom Kernel"
+			},
+			"customlogo" : 
+			{
+				"condition" : "logo.value == 1",
+				"index" : 17,
+				"order" : 117,
+				"text" : "Custom Logo",
+				"type" : "scenetexture",
+				"value" : ""
+			},
+			"customlogoresolution" : 
+			{
+				"condition" : "logo.value == 1",
+				"fraction" : true,
+				"index" : 22,
+				"max" : 0.06,
+				"min" : 0.02,
+				"order" : 122,
+				"precision" : 4,
+				"step" : 0.001,
+				"text" : "Custom Logo Resolution",
+				"type" : "slider",
+				"value" : 0.031
+			},
+			"customos" : 
+			{
+				"condition" : "logo.value == 1",
+				"index" : 34,
+				"order" : 134,
+				"text" : "[Custom] OS",
+				"type" : "textinput",
+				"value" : "Custom OS"
+			},
+			"custompackages" : 
+			{
+				"condition" : "logo.value == 1",
+				"index" : 36,
+				"order" : 136,
+				"text" : "[Custom] Packages",
+				"type" : "textinput",
+				"value" : "Custom Packages"
+			},
+			"customshell" : 
+			{
+				"condition" : "logo.value == 1",
+				"index" : 37,
+				"order" : 137,
+				"text" : "[Custom] Shell",
+				"type" : "textinput",
+				"value" : "Custom Shell"
+			},
+			"customterminal" : 
+			{
+				"condition" : "logo.value == 1",
+				"index" : 38,
+				"order" : 138,
+				"text" : "[Custom] Terminal",
+				"type" : "textinput",
+				"value" : "Custom Terminal"
+			},
+			"data" : 
+			{
+				"condition" : "timer0.value == true",
+				"index" : 60,
+				"order" : 160,
+				"text" : "(DD/MM) Date 0",
+				"type" : "textinput",
+				"value" : "19/02"
+			},
+			"data1" : 
+			{
+				"condition" : "timer1.value == true",
+				"index" : 63,
+				"order" : 163,
+				"text" : "(DD/MM) Date 1",
+				"type" : "textinput",
+				"value" : "05/04"
+			},
+			"date2" : 
+			{
+				"condition" : "timer2.value == true",
+				"index" : 66,
+				"order" : 166,
+				"text" : "(DD/MM) Date 2",
+				"type" : "textinput",
+				"value" : "01/01"
+			},
+			"date3" : 
+			{
+				"condition" : "timer3.value == true",
+				"index" : 69,
+				"order" : 169,
+				"text" : "(DD/MM) Date 3",
+				"type" : "textinput",
+				"value" : "03/12/1994"
+			},
+			"date4" : 
+			{
+				"condition" : "timer4.value == true",
+				"index" : 72,
+				"order" : 172,
+				"text" : "(DD/MM) Date 4",
+				"type" : "textinput",
+				"value" : "01/01/2000"
+			},
+			"disk" : 
+			{
+				"index" : 33,
+				"order" : 133,
+				"text" : "Disk",
+				"type" : "textinput",
+				"value" : "341 GiB / 446 GiB (76%)"
+			},
+			"eastereggs" : 
+			{
+				"index" : 5,
+				"order" : 105,
+				"text" : "BSOD",
+				"type" : "bool",
+				"value" : true
+			},
+			"eastereggs1" : 
+			{
+				"condition" : "eastereggs.value == true",
+				"index" : 73,
+				"order" : 173,
+				"text" : "BSOD",
+				"type" : "group",
+				"value" : ""
+			},
+			"efeitovhs" : 
+			{
+				"condition" : "",
+				"index" : 20,
+				"order" : 120,
+				"text" : "VHS Effect",
+				"type" : "bool",
+				"value" : false
+			},
+			"endereodeip" : 
+			{
+				"index" : 39,
+				"order" : 139,
+				"text" : "IP Address",
+				"type" : "textinput",
+				"value" : "192.168.0.5"
+			},
+			"fontsize" : 
+			{
+				"index" : 9,
+				"options" : 
+				[
+					{
+						"label" : "Classic Terminal",
+						"value" : "7"
+					},
+					{
+						"label" : "Side by Side",
+						"value" : "9"
+					}
+				],
+				"order" : 109,
+				"text" : "Zoom Mode",
+				"type" : "combo",
+				"value" : "7"
+			},
+			"furrymode" : 
+			{
+				"condition" : "",
+				"index" : 75,
+				"order" : 175,
+				"text" : "Furry Mode",
+				"type" : "bool",
+				"value" : false
+			},
+			"gpu" : 
+			{
+				"index" : 31,
+				"order" : 131,
+				"text" : "GPU",
+				"type" : "textinput",
+				"value" : "NVIDIA GeForce GTX 1660 Super"
+			},
+			"highlighttextcolor" : 
+			{
+				"condition" : "theme.value == 4",
+				"index" : 11,
+				"order" : 111,
+				"text" : "Highlight Text Color",
+				"type" : "color",
+				"value" : "1 0 0.5607843137254902"
+			},
+			"host" : 
+			{
+				"index" : 28,
+				"order" : 128,
+				"text" : "Host‎",
+				"type" : "textinput",
+				"value" : "Setya SetyaComputer"
+			},
+			"label" : 
+			{
+				"condition" : "timer0.value == true",
+				"index" : 59,
+				"order" : 159,
+				"text" : "Label 0",
+				"type" : "textinput",
+				"value" : "Birthday"
+			},
+			"label1" : 
+			{
+				"condition" : "clock0.value == true",
+				"index" : 43,
+				"order" : 143,
+				"text" : "Label 0",
+				"type" : "textinput",
+				"value" : "SP"
+			},
+			"label2" : 
+			{
+				"condition" : "clock1.value == true",
+				"index" : 46,
+				"order" : 146,
+				"text" : "Label 1",
+				"type" : "textinput",
+				"value" : "TOKYO"
+			},
+			"label21" : 
+			{
+				"condition" : "timer2.value == true",
+				"index" : 65,
+				"order" : 165,
+				"text" : "Label 2",
+				"type" : "textinput",
+				"value" : "NEW YEAR"
+			},
+			"label3" : 
+			{
+				"condition" : "clock2.value == true",
+				"index" : 49,
+				"order" : 149,
+				"text" : "Label 2",
+				"type" : "textinput",
+				"value" : "PARIS"
+			},
+			"label31" : 
+			{
+				"condition" : "timer3.value == true",
+				"index" : 68,
+				"order" : 168,
+				"text" : "Label 3",
+				"type" : "textinput",
+				"value" : "PS1 LAUNCH"
+			},
+			"label4" : 
+			{
+				"condition" : "clock3.value == true",
+				"index" : 52,
+				"order" : 152,
+				"text" : "Label 3",
+				"type" : "textinput",
+				"value" : "LONDON"
+			},
+			"label41" : 
+			{
+				"condition" : "timer4.value == true",
+				"index" : 71,
+				"order" : 171,
+				"text" : "Label 4",
+				"type" : "textinput",
+				"value" : "2000"
+			},
+			"label5" : 
+			{
+				"condition" : "clock4.value == true",
+				"index" : 55,
+				"order" : 155,
+				"text" : "Label 4",
+				"type" : "textinput",
+				"value" : "NEW YORK"
+			},
+			"language" : 
+			{
+				"index" : 2,
+				"options" : 
+				[
+					{
+						"label" : "Portuguese",
+						"value" : "Portuguese"
+					},
+					{
+						"label" : "English",
+						"value" : "English"
+					},
+					{
+						"label" : "Japanese",
+						"value" : "Japanese"
+					},
+					{
+						"label" : "Russian",
+						"value" : "Russian"
+					}
+				],
+				"order" : 102,
+				"text" : "Language",
+				"type" : "combo",
+				"value" : "English"
+			},
+			"logo" : 
+			{
+				"index" : 8,
+				"options" : 
+				[
+					{
+						"label" : "Windows 11",
+						"value" : "win11"
+					},
+					{
+						"label" : "Windows 10",
+						"value" : "win10"
+					},
+					{
+						"label" : "Ubuntu",
+						"value" : "ubuntu"
+					},
+					{
+						"label" : "macOS",
+						"value" : "mac"
+					},
+					{
+						"label" : "Pop!_OS",
+						"value" : "popos"
+					},
+					{
+						"label" : "Custom Logo",
+						"value" : "1"
+					}
+				],
+				"order" : 108,
+				"text" : "Logo",
+				"type" : "combo",
+				"value" : "win11"
+			},
+			"memory" : 
+			{
+				"index" : 32,
+				"order" : 132,
+				"text" : "Memory",
+				"type" : "textinput",
+				"value" : "10,15GiB / 31,91 GiB (31%)"
+			},
+			"metergreencolor" : 
+			{
+				"condition" : "theme.value == 4",
+				"index" : 12,
+				"order" : 112,
+				"text" : "Meter Green Color",
+				"type" : "color",
+				"value" : "0.09019607843137255 0.5803921568627451 0"
+			},
+			"metergreycolor" : 
+			{
+				"condition" : "theme.value == 4",
+				"index" : 15,
+				"order" : 115,
+				"text" : "Meter Grey Color",
+				"type" : "color",
+				"value" : "0.803921568627451 0.803921568627451 0.803921568627451"
+			},
+			"meterredcolor" : 
+			{
+				"condition" : "theme.value == 4",
+				"index" : 14,
+				"order" : 114,
+				"text" : "Meter Red Color",
+				"type" : "color",
+				"value" : "0.6392156862745098 0.023529411764705882 0.07450980392156863"
+			},
+			"meteryellowcolor" : 
+			{
+				"condition" : "theme.value == 4",
+				"index" : 13,
+				"order" : 113,
+				"text" : "Meter Yellow Color",
+				"type" : "color",
+				"value" : "0.7607843137254902 0.615686274509804 0"
+			},
+			"motherboard" : 
+			{
+				"index" : 29,
+				"order" : 129,
+				"text" : "Motherboard",
+				"type" : "textinput",
+				"value" : "ASUS COMPUTER INC. PRIME A320M-K/BR"
+			},
+			"nomedosistema" : 
+			{
+				"index" : 27,
+				"order" : 127,
+				"text" : "System Name",
+				"type" : "textinput",
+				"value" : "SETYARYZEN"
+			},
+			"optionalsupportthiswallpaper" : 
+			{
+				"index" : 0,
+				"order" : 100,
+				"text" : "[Optional] 💸Support this Wallpaper💸",
+				"type" : "bool",
+				"value" : false
+			},
+			"pretoebranco" : 
+			{
+				"index" : 21,
+				"order" : 121,
+				"text" : "Greyscale Album Cover",
+				"type" : "bool",
+				"value" : false
+			},
+			"relgios" : 
+			{
+				"index" : 40,
+				"order" : 140,
+				"text" : "Clocks",
+				"type" : "group",
+				"value" : ""
+			},
+			"resoluo" : 
+			{
+				"condition" : "fontsize.value == 7",
+				"fraction" : true,
+				"index" : 23,
+				"max" : 0.05,
+				"min" : 0.02,
+				"order" : 123,
+				"precision" : 4,
+				"step" : 0.001,
+				"text" : "Album Cover Resolution",
+				"type" : "slider",
+				"value" : 0.031
+			},
+			"rtulo" : 
+			{
+				"condition" : "timer1.value == true",
+				"index" : 62,
+				"order" : 162,
+				"text" : "Label 1",
+				"type" : "textinput",
+				"value" : "Birthday"
+			},
+			"schemecolor" : 
+			{
+				"index" : 0,
+				"order" : 100,
+				"text" : "ui_browse_properties_scheme_color",
+				"type" : "color",
+				"value" : "0.047058823529411764 0.047058823529411764 0.047058823529411764"
+			},
+			"showalbumcovers" : 
+			{
+				"index" : 4,
+				"order" : 104,
+				"text" : "Show Album Covers",
+				"type" : "bool",
+				"value" : true
+			},
+			"showsysteminfo" : 
+			{
+				"index" : 3,
+				"order" : 103,
+				"text" : "Show System Info",
+				"type" : "bool",
+				"value" : true
+			},
+			"teste" : 
+			{
+				"index" : 25,
+				"order" : 125,
+				"text" : "System Information",
+				"type" : "group",
+				"value" : ""
+			},
+			"textcolor" : 
+			{
+				"condition" : "theme.value == 4",
+				"index" : 10,
+				"order" : 110,
+				"text" : "Text Color",
+				"type" : "color",
+				"value" : "1 1 1"
+			},
+			"theme" : 
+			{
+				"index" : 7,
+				"options" : 
+				[
+					{
+						"label" : "Light",
+						"value" : "0"
+					},
+					{
+						"label" : "Dark",
+						"value" : "1"
+					},
+					{
+						"label" : "Full Dark",
+						"value" : "2"
+					},
+					{
+						"label" : "Aperture Science",
+						"value" : "3"
+					},
+					{
+						"label" : "Custom Theme",
+						"value" : "4"
+					}
+				],
+				"order" : 107,
+				"text" : "Theme",
+				"type" : "combo",
+				"value" : "1"
+			},
+			"timer0" : 
+			{
+				"index" : 58,
+				"order" : 158,
+				"text" : "Timer 0",
+				"type" : "bool",
+				"value" : true
+			},
+			"timer1" : 
+			{
+				"index" : 61,
+				"order" : 161,
+				"text" : "Timer 1",
+				"type" : "bool",
+				"value" : true
+			},
+			"timer2" : 
+			{
+				"index" : 64,
+				"order" : 164,
+				"text" : "Timer 2",
+				"type" : "bool",
+				"value" : true
+			},
+			"timer3" : 
+			{
+				"index" : 67,
+				"order" : 167,
+				"text" : "Timer 3",
+				"type" : "bool",
+				"value" : false
+			},
+			"timer4" : 
+			{
+				"index" : 70,
+				"order" : 170,
+				"text" : "Timer 4",
+				"type" : "bool",
+				"value" : false
+			},
+			"timers" : 
+			{
+				"index" : 57,
+				"order" : 157,
+				"text" : "Timers",
+				"type" : "group",
+				"value" : ""
+			},
+			"timezone" : 
+			{
+				"condition" : "clock0.value == true",
+				"index" : 44,
+				"order" : 144,
+				"text" : "(UTC) Timezone 0",
+				"type" : "textinput",
+				"value" : "-3"
+			},
+			"timezone1" : 
+			{
+				"condition" : "clock1.value == true",
+				"index" : 47,
+				"order" : 147,
+				"text" : "(UTC) Timezone 1",
+				"type" : "textinput",
+				"value" : "9"
+			},
+			"timezone2" : 
+			{
+				"condition" : "clock2.value == true",
+				"index" : 50,
+				"order" : 150,
+				"text" : "(UTC) Timezone 2",
+				"type" : "textinput",
+				"value" : "1"
+			},
+			"timezone3" : 
+			{
+				"condition" : "clock3.value == true",
+				"index" : 53,
+				"order" : 153,
+				"text" : "(UTC) Timezone 3",
+				"type" : "textinput",
+				"value" : "0"
+			},
+			"timezone4" : 
+			{
+				"condition" : "clock4.value == true",
+				"index" : 56,
+				"order" : 156,
+				"text" : "(UTC) Timezone 4",
+				"type" : "textinput",
+				"value" : "-5"
+			},
+			"usurio" : 
+			{
+				"index" : 26,
+				"order" : 126,
+				"text" : "User",
+				"type" : "textinput",
+				"value" : "setya"
+			}
+		},
+		"supportsaudioprocessing" : true,
+		"supportsvideo" : true,
+		"supportsvideoflags" : 2
+	},
+	"preview" : "preview.gif",
+	"ratingsex" : "none",
+	"ratingviolence" : "none",
+	"tags" : [ "Retro" ],
+	"title" : "ScreenFetch Terminal | Clock | Audio Responsive | 4K",
+	"type" : "Scene",
+	"version" : 30,
+	"visibility" : "public",
+	"workshopid" : "3634342477",
+	"workshopurl" : "steam://url/CommunityFilePage/3634342477"
+}

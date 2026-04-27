@@ -2,7 +2,7 @@
 # 这个脚本在后台定期更新系统信息
 
 param(
-    [int]$UpdateInterval = 5  # 秒
+    [int]$UpdateInterval = 2  # 秒
 )
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path

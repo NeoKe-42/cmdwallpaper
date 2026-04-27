@@ -1,200 +1,113 @@
 using System;
 using System.IO;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Threading;
 
-// ============================================================
-// CoreAudio COM interfaces
-// ============================================================
-
+// CoreAudio COM - minimal correct definitions
 [ComImport, Guid("BCDE0395-E52F-467C-8E3D-C4579291692E")]
-public class MMDeviceEnumerator { }
+internal class _MMDeviceEnumerator { }
 
 [ComImport, Guid("A95664D2-9614-4F35-A746-DE8DB63617E6")]
 [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-public interface IMMDeviceEnumerator {
-    int GetDefaultAudioEndpoint(int dataFlow, int role, [Out] out IntPtr ppEndpoint);
+internal interface _IMMDeviceEnumerator {
+    int f0(); // EnumAudioEndpoints stub
+    int GetDefaultAudioEndpoint(int dataFlow, int role, [Out, MarshalAs(UnmanagedType.Interface)] out _IMMDevice endpoint);
 }
 
 [ComImport, Guid("D666063F-1587-4E43-81F1-B948E807363F")]
 [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-public interface IMMDevice {
-    int Activate([MarshalAs(UnmanagedType.LPStruct)] Guid iid, uint dwClsCtx,
-                 IntPtr pActivationParams, [Out, MarshalAs(UnmanagedType.IUnknown)] out object ppInterface);
-}
-
-[ComImport, Guid("5CDF2C82-841E-4546-9722-0CF74078229A")]
-[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-public interface IAudioEndpointVolume {
-    int GetMasterVolumeLevelScalar(out float pfLevel);
-    int GetMute(out int pbMute);
+internal interface _IMMDevice {
+    int Activate([In] ref Guid iid, uint clsCtx, [In] IntPtr activationParams, [Out, MarshalAs(UnmanagedType.Interface)] out _IAudioMeterInformation meterInterface);
+    int f1(); // OpenPropertyStore stub
+    int f2(); // GetId stub
+    int f3(); // GetState stub
 }
 
 [ComImport, Guid("C02216F6-8C67-4B5B-9D00-D008E73E0064")]
 [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-public interface IAudioMeterInformation {
+internal interface _IAudioMeterInformation {
     int GetPeakValue(out float pfPeak);
     int GetMeteringChannelCount(out int pnChannelCount);
-    int GetChannelsPeakValues(int u32ChannelCount, [Out] float[] afPeakValues);
+    int GetChannelsPeakValues(int u32ChannelCount, [Out, MarshalAs(UnmanagedType.LPArray, SizeParamIndex=0)] float[] afPeakValues);
     int QueryHardwareSupport(out int pdwHardwareSupportMask);
 }
 
-// ============================================================
-// Static helpers
-// ============================================================
-
 public static class MediaHelper
 {
-    static readonly Guid IID_IAudioEndpointVolume  = new Guid("5CDF2C82-841E-4546-9722-0CF74078229A");
-    static readonly Guid IID_IAudioMeterInformation = new Guid("C02216F6-8C67-4B5B-9D00-D008E73E0064");
+    static float _bass, _mid, _treble;
+    static Thread _thread;
+    static bool _running;
+    static string _dir;
+    static DateTime _lastWrite = DateTime.MinValue;
 
-    private static bool TryGetDevice(out IMMDevice device)
-    {
-        device = null;
-        try
-        {
-            var e = (IMMDeviceEnumerator)new MMDeviceEnumerator();
-            IntPtr p;
-            int hr = e.GetDefaultAudioEndpoint(0, 0, out p);
-            if (hr != 0 || p == IntPtr.Zero) return false;
-            device = (IMMDevice)Marshal.GetObjectForIUnknown(p);
-            return device != null;
-        }
-        catch { return false; }
+    public static void StartMeter(string dir) {
+        _dir = dir;
+        if (_running) return;
+        _running = true;
+        _thread = new Thread(MeterLoop) { IsBackground = true, Priority = ThreadPriority.BelowNormal };
+        _thread.Start();
     }
 
-    // ---------- Audio Volume ----------
-
-    public static int GetMasterVolume(out bool muted)
-    {
-        muted = false;
-        try
-        {
-            IMMDevice device;
-            if (!TryGetDevice(out device)) return -1;
-
-            object volObj;
-            device.Activate(IID_IAudioEndpointVolume, 0, IntPtr.Zero, out volObj);
-            var volume = (IAudioEndpointVolume)volObj;
-            float level;
-            volume.GetMasterVolumeLevelScalar(out level);
-            int m;
-            volume.GetMute(out m);
-            muted = (m != 0);
-            return (int)Math.Round(level * 100f);
-        }
-        catch { return -1; }
+    static _IAudioMeterInformation GetMeter() {
+        try {
+            var enumerator = (_IMMDeviceEnumerator)new _MMDeviceEnumerator();
+            _IMMDevice device;
+            enumerator.GetDefaultAudioEndpoint(0, 0, out device); // eRender, eConsole
+            if (device == null) return null;
+            Guid iid = new Guid("C02216F6-8C67-4B5B-9D00-D008E73E0064");
+            _IAudioMeterInformation meter;
+            device.Activate(ref iid, 0, IntPtr.Zero, out meter);
+            return meter;
+        } catch { return null; }
     }
 
-    // ---------- Audio Peak Level ----------
+    static void MeterLoop() {
+        var meter = GetMeter();
+        if (meter == null) return;
 
-    public static float GetAudioPeakLevel()
-    {
-        try
-        {
-            IMMDevice device;
-            if (!TryGetDevice(out device)) return -1f;
-
-            object meterObj;
-            device.Activate(IID_IAudioMeterInformation, 0, IntPtr.Zero, out meterObj);
-            var meter = (IAudioMeterInformation)meterObj;
-            float peak;
-            meter.GetPeakValue(out peak);
-            return peak;
-        }
-        catch { return -1f; }
-    }
-
-    // ---------- Now Playing via window titles ----------
-
-    public static string GetNowPlayingInfo(out string title, out string artist,
-                                            out string album, out double pos, out double dur)
-    {
-        title = null; artist = null; album = null; pos = -1; dur = -1;
-
-        // (processName, titleFirst)
-        // titleFirst=true: window title is "Title - Artist" (Chinese apps)
-        // titleFirst=false: window title is "Artist - Title" (Western apps)
-        var procs = new Tuple<string, bool>[] {
-            Tuple.Create("qqmusic",          true),
-            Tuple.Create("qqmusicexternal",  true),
-            Tuple.Create("qmbrowser",        true),
-            Tuple.Create("cloudmusic",       true),
-            Tuple.Create("kwmusic",          true),
-            Tuple.Create("kugou",            true),
-            Tuple.Create("kugoumusic",       true),
-            Tuple.Create("baidumusic",       true),
-            Tuple.Create("xiami",            true),
-            Tuple.Create("netease",          true),
-            Tuple.Create("spotify",          false),
-            Tuple.Create("tidal",            false),
-            Tuple.Create("deezer",           false),
-            Tuple.Create("applemusic",       false),
-            Tuple.Create("msedge",           false),
-            Tuple.Create("chrome",           false),
-            Tuple.Create("firefox",          false),
-            Tuple.Create("opera",            false),
-            Tuple.Create("wmplayer",         false),
-            Tuple.Create("vlc",              false),
-            Tuple.Create("foobar2000",       false),
-            Tuple.Create("groove",           false),
-            Tuple.Create("music.ui",         false),
-            Tuple.Create("aimp",             false),
-            Tuple.Create("winamp",           false),
-            Tuple.Create("mediamonkey",      false),
-            Tuple.Create("musicbee",         false),
-            Tuple.Create("thunderbird",      false),
-        };
-
-        try
-        {
-            foreach (var entry in procs)
-            {
-                var name = entry.Item1;
-                var titleFirst = entry.Item2;
-
-                System.Diagnostics.Process[] plist;
-                try { plist = System.Diagnostics.Process.GetProcessesByName(name); }
-                catch { continue; }
-                if (plist == null || plist.Length == 0) continue;
-
-                foreach (var p in plist)
-                {
-                    string wt;
-                    try { wt = p.MainWindowTitle; } catch { continue; }
-                    if (string.IsNullOrEmpty(wt)) continue;
-
-                    string tl = wt.ToLower().Trim();
-                    if (tl == "program manager" || tl == "start" || tl == "search" ||
-                        tl == "settings" || tl.StartsWith("microsoft")) continue;
-
-                    int idx = wt.IndexOf(" - ");
-                    if (idx > 0 && idx < wt.Length - 3)
-                    {
-                        string first = wt.Substring(0, idx).Trim();
-                        string rest = wt.Substring(idx + 3).Trim();
-                        int sep = rest.LastIndexOf(" - ");
-                        string second, third = null;
-                        if (sep > 0) {
-                            second = rest.Substring(0, sep).Trim();
-                            third = rest.Substring(sep + 3).Trim();
-                        } else {
-                            second = rest;
-                        }
-
-                        if (titleFirst) { title = first; artist = second; album = third; }
-                        else             { artist = first; title = second; album = third; }
-                        return name;
-                    }
-
-                    if (wt.Length >= 2 && wt.IndexOfAny(new char[]{'/', '\\', ':'}) < 0)
-                    {
-                        title = wt.Trim();
-                        return name;
-                    }
+        while (_running) {
+            try {
+                float peak = 0;
+                int cc = 0;
+                meter.GetPeakValue(out peak);
+                meter.GetMeteringChannelCount(out cc);
+                float[] chPeaks = new float[Math.Max(2, Math.Min(8, cc))];
+                if (cc > 0) {
+                    try { meter.GetChannelsPeakValues(cc, chPeaks); } catch { }
                 }
-            }
+
+                float b = cc >= 1 ? chPeaks[0] * 100 : peak * 100;
+                float m = cc >= 2 ? chPeaks[1] * 100 : peak * 85;
+                float t = cc >= 3 ? chPeaks[2] * 100 : peak * 70;
+                b = Math.Min(100, b); m = Math.Min(100, m); t = Math.Min(100, t);
+                lock (typeof(MediaHelper)) { _bass = b; _mid = m; _treble = t; }
+
+                var now = DateTime.UtcNow;
+                if (_dir != null && (now - _lastWrite).TotalMilliseconds > 80) {
+                    _lastWrite = now;
+                    try { File.WriteAllText(Path.Combine(_dir, "eq_data.json"),
+                        "{\"b\":" + ((int)b) + ",\"m\":" + ((int)m) + ",\"t\":" + ((int)t) + "}"); } catch { }
+                }
+            } catch { }
+            Thread.Sleep(80);
         }
-        catch { }
+    }
+
+    public static float GetEQBass()   { lock (typeof(MediaHelper)) return _bass; }
+    public static float GetEQMid()    { lock (typeof(MediaHelper)) return _mid; }
+    public static float GetEQTreble() { lock (typeof(MediaHelper)) return _treble; }
+
+    public static int GetMasterVolume(out bool muted) {
+        muted = false;
+        try { var m = GetMeter(); if (m == null) return -1; float p; m.GetPeakValue(out p); return (int)Math.Round(p * 100); } catch { return -1; }
+    }
+
+    // ----- Now Playing (window titles) -----
+    public static string GetNowPlaying(out string title, out string artist, out string album) {
+        title = null; artist = null; album = null;
+        var procs = new Tuple<string, bool>[] { Tuple.Create("qqmusic",true),Tuple.Create("qqmusicexternal",true),Tuple.Create("qmbrowser",true),Tuple.Create("cloudmusic",true),Tuple.Create("kwmusic",true),Tuple.Create("kugou",true),Tuple.Create("kugoumusic",true),Tuple.Create("netease",true),Tuple.Create("spotify",false),Tuple.Create("tidal",false),Tuple.Create("deezer",false),Tuple.Create("msedge",false),Tuple.Create("chrome",false),Tuple.Create("firefox",false),Tuple.Create("opera",false),Tuple.Create("wmplayer",false),Tuple.Create("vlc",false),Tuple.Create("foobar2000",false),Tuple.Create("groove",false),Tuple.Create("music.ui",false) };
+        try { foreach (var en in procs) { var name = en.Item1; var tf = en.Item2; Process[] pl; try { pl = Process.GetProcessesByName(name); } catch { continue; } if (pl == null || pl.Length == 0) continue; foreach (var p in pl) { string wt; try { wt = p.MainWindowTitle; } catch { continue; } if (string.IsNullOrEmpty(wt)) continue; string tl = wt.ToLower().Trim(); if (tl == "program manager" || tl == "start" || tl == "search" || tl == "settings" || tl.StartsWith("microsoft")) continue; int idx = wt.IndexOf(" - "); if (idx <= 0 || idx >= wt.Length - 3) continue; string first = wt.Substring(0, idx).Trim(), rest = wt.Substring(idx + 3).Trim(); if (first.Contains("://") || rest.Contains("://") || first.Length > 120 || rest.Length > 120) continue; if (first.Contains(" - ") || first.StartsWith("http")) continue; int sep = rest.LastIndexOf(" - "); string second, third = null; if (sep > 0) { second = rest.Substring(0, sep).Trim(); third = rest.Substring(sep + 3).Trim(); } else { second = rest; } if (tf) { title = first; artist = second; album = third; } else { artist = first; title = second; album = third; } return name; } } } catch { }
         return null;
     }
 }

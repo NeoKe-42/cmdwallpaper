@@ -1,8 +1,10 @@
 ﻿{
     "audio":  {
-                  "muted":  null,
-                  "peak":  null,
-                  "volume_percent":  null
+                  "muted":  false,
+                  "eq_bass":  79.8,
+                  "volume":  90,
+                  "eq_treble":  62.1,
+                  "eq_mid":  88.8
               },
     "motherboard":  "LENOVO LNVNB161216",
     "cpu":  {
@@ -12,39 +14,39 @@
                 "cores":  8
             },
     "now_playing":  {
-                        "artist":  "MKJ / Jessica Chertock",
-                        "title":  "Frontlines",
+                        "artist":  "P.T. Adamczyk / Sora Lion",
+                        "title":  "Hardest to Be (From \"Cyberpunk 2077: Phantom Liberty\" Score)",
                         "source":  "qqmusic",
                         "status":  "playing"
                     },
     "disk":  {
                  "F:":  {
-                            "used_gb":  128.36,
+                            "used_gb":  128.4,
                             "total_gb":  150.25,
-                            "percent":  85.4,
+                            "percent":  85.5,
                             "mount":  "F:\\",
-                            "free_gb":  21.89
+                            "free_gb":  21.85
                         },
                  "C:":  {
-                            "used_gb":  402.36,
+                            "used_gb":  400.69,
                             "total_gb":  474.71,
-                            "percent":  84.8,
+                            "percent":  84.4,
                             "mount":  "C:\\",
-                            "free_gb":  72.35
+                            "free_gb":  74.02
                         },
                  "J:":  {
-                            "used_gb":  77.72,
+                            "used_gb":  77.759999999999991,
                             "total_gb":  119.02,
                             "percent":  65.3,
                             "mount":  "J:\\",
-                            "free_gb":  41.3
+                            "free_gb":  41.26
                         },
                  "D:":  {
-                            "used_gb":  671.81,
+                            "used_gb":  651.56,
                             "total_gb":  781.25,
-                            "percent":  86,
+                            "percent":  83.4,
                             "mount":  "D:\\",
-                            "free_gb":  109.44
+                            "free_gb":  129.69
                         }
              },
     "os":  {
@@ -54,12 +56,12 @@
                "build":  "26120"
            },
     "memory":  {
-                   "used_gb":  12.84,
+                   "used_gb":  14.55,
                    "total_gb":  31.19,
-                   "percent":  41.2,
-                   "available_gb":  18.35
+                   "percent":  46.6,
+                   "available_gb":  16.64
                },
-    "timestamp":  "2026-04-27T11:05:58.3197750Z",
+    "timestamp":  "2026-04-27T13:37:14.6057885Z",
     "system":  {
                    "username":  "m1586",
                    "hostname":  "WANGKE"
