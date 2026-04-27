@@ -1,0 +1,76 @@
+﻿{
+    "audio":  {
+                  "muted":  null,
+                  "peak":  null,
+                  "volume_percent":  null
+              },
+    "motherboard":  "LENOVO LNVNB161216",
+    "cpu":  {
+                "threads":  16,
+                "frequency_mhz":  3201,
+                "name":  "AMD Ryzen 7 6800H with Radeon Graphics",
+                "cores":  8
+            },
+    "now_playing":  {
+                        "artist":  "MKJ / Jessica Chertock",
+                        "title":  "Frontlines",
+                        "source":  "qqmusic",
+                        "status":  "playing"
+                    },
+    "disk":  {
+                 "F:":  {
+                            "used_gb":  128.36,
+                            "total_gb":  150.25,
+                            "percent":  85.4,
+                            "mount":  "F:\\",
+                            "free_gb":  21.89
+                        },
+                 "C:":  {
+                            "used_gb":  402.36,
+                            "total_gb":  474.71,
+                            "percent":  84.8,
+                            "mount":  "C:\\",
+                            "free_gb":  72.35
+                        },
+                 "J:":  {
+                            "used_gb":  77.72,
+                            "total_gb":  119.02,
+                            "percent":  65.3,
+                            "mount":  "J:\\",
+                            "free_gb":  41.3
+                        },
+                 "D:":  {
+                            "used_gb":  671.81,
+                            "total_gb":  781.25,
+                            "percent":  86,
+                            "mount":  "D:\\",
+                            "free_gb":  109.44
+                        }
+             },
+    "os":  {
+               "architecture":  "64 位",
+               "name":  "Microsoft Windows 11 家庭中文版",
+               "version":  "10.0.26120",
+               "build":  "26120"
+           },
+    "memory":  {
+                   "used_gb":  12.84,
+                   "total_gb":  31.19,
+                   "percent":  41.2,
+                   "available_gb":  18.35
+               },
+    "timestamp":  "2026-04-27T11:05:58.3197750Z",
+    "system":  {
+                   "username":  "m1586",
+                   "hostname":  "WANGKE"
+               },
+    "network":  {
+                    "interface":  "WLAN",
+                    "ipv4":  "192.168.43.11"
+                },
+    "gpu":  [
+                "OrayIddDriver Device",
+                "NVIDIA GeForce RTX 3060 Laptop GPU",
+                "AMD Radeon(TM) Graphics"
+            ]
+}

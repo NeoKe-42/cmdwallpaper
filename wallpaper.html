@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: transparent;
+    font-family: "Consolas", "Courier New", "SimHei", monospace;
+    font-size: 14px;
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .terminal {
+    background: rgba(12, 12, 16, 0.92);
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 22px 32px;
+    min-width: 980px;
+    max-width: 1080px;
+    box-shadow: 0 4px 30px rgba(0,0,0,0.6);
+  }
+
+  .title-bar { color: #666; font-size: 12px; margin-bottom: 12px; letter-spacing: 1px; }
+  .title-bar span { color: #0f0; }
+  .dots { color: #ff5555 !important; }
+  .dots2 { color: #f1fa8c !important; }
+  .dots3 { color: #50fa7b !important; }
+
+  .time-row {
+    color: #888; font-size: 12px; margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px; white-space: nowrap;
+  }
+  .time-row .time-pct { color: #aaa; min-width: 38px; text-align: right; }
+  .time-row .sep { color: #444; margin: 0 4px; }
+  .time-row #dateDisplay { color: #aaa; }
+
+  .content { display: flex; gap: 30px; align-items: flex-start; }
+
+  .logo {
+    color: #00ccff; white-space: pre; line-height: 1.15;
+    font-size: 12px; flex-shrink: 0;
+  }
+
+  .info { line-height: 1.7; min-width: 370px; }
+  .info .row { display: flex; }
+  .info .label { color: #00ff88; min-width: 60px; flex-shrink: 0; }
+  .info .colon { color: #888; margin-right: 8px; }
+  .info .value { color: #ddd; }
+  .info .dim { color: #888; font-size: 13px; }
+  .info .sep { color: #444; }
+
+  .sidebar { min-width: 240px; max-width: 270px; flex-shrink: 0; }
+  .sidebar .section { margin-bottom: 14px; }
+
+  .section-label {
+    color: #555; font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+    margin-bottom: 6px; border-bottom: 1px solid #333; padding-bottom: 2px;
+  }
+
+  .eq-bars { display: flex; gap: 5px; margin-bottom: 4px; }
+  .eq-band { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .eq-fill-outer {
+    width: 100%; height: 42px; background: rgba(255,255,255,0.04);
+    border: 1px solid #333; border-radius: 2px;
+    position: relative; overflow: hidden;
+  }
+  .eq-fill-inner {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    transition: height 0.12s linear; border-radius: 1px;
+  }
+  #eqBass .eq-fill-inner { background: #ff5555; }
+  #eqMid .eq-fill-inner { background: #f1fa8c; }
+  #eqTreble .eq-fill-inner { background: #50fa7b; }
+  .eq-band span { color: #666; font-size: 9px; letter-spacing: 1px; }
+  .eq-vol { color: #888; font-size: 11px; text-align: center; }
+
+  .np-empty { color: #555; font-size: 11px; font-style: italic; }
+  .np-content { display: none; }
+  .np-progress-row { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; font-size: 11px; color: #888; }
+  .np-progress-bar { flex: 1; height: 4px; background: #333; border-radius: 2px; overflow: hidden; }
+  .np-progress-fill { height: 100%; background: #00ff88; border-radius: 2px; width: 0%; transition: width 0.5s linear; }
+  .np-artist { color: #00ccff; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .np-title { color: #ddd; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .np-album { color: #777; font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  #updated { color: #555; font-size: 10px; margin-top: 12px; text-align: right; }
+</style>
+</head>
+<body>
+
+<div class="terminal">
+  <div class="title-bar">
+    <span class="dots">&#9679;</span> <span class="dots2">&#9679;</span> <span class="dots3">&#9679;</span>
+    &nbsp;&nbsp;<span>m1586@wangke</span>:~/
+  </div>
+
+  <div class="time-row">
+    <span id="timeDisplay">00:00:00</span>
+    <span class="sep">|</span>
+    <span id="timeBar"></span>
+    <span class="time-pct" id="timePct">0%</span>
+    <span class="sep">|</span>
+    <span id="dateDisplay">---- -- --</span>
+  </div>
+
+  <div class="content">
+    <div class="logo" id="logo"></div>
+    <div class="info" id="info"></div>
+    <div class="sidebar" id="sidebar">
+      <div class="section">
+        <div class="section-label">Audio</div>
+        <div class="eq-bars">
+          <div class="eq-band">
+            <div class="eq-fill-outer" id="eqBass"><div class="eq-fill-inner"></div></div>
+            <span>BASS</span>
+          </div>
+          <div class="eq-band">
+            <div class="eq-fill-outer" id="eqMid"><div class="eq-fill-inner"></div></div>
+            <span>MID</span>
+          </div>
+          <div class="eq-band">
+            <div class="eq-fill-outer" id="eqTreble"><div class="eq-fill-inner"></div></div>
+            <span>TREB</span>
+          </div>
+        </div>
+        <div class="eq-vol" id="eqVol">VOL: --</div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Now Playing</div>
+        <div class="np-empty" id="npEmpty">No media</div>
+        <div class="np-content" id="npContent">
+          <div class="np-progress-row">
+            <span id="npPos">--:--</span>
+            <div class="np-progress-bar"><div class="np-progress-fill" id="npFill"></div></div>
+            <span id="npDur">--:--</span>
+          </div>
+          <div class="np-artist" id="npArtist">--</div>
+          <div class="np-title" id="npTitle">--</div>
+          <div class="np-album" id="npAlbum">--</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="updated"></div>
+</div>
+
+<script>
+(function() {
+  var REFRESH_MS = 5000;
+
+  // ASCII Art
+  var logo = [
+    '            ......            ',
+    '         .:llOX0Kkl;.         ',
+    '       .oKNNNNNNNNNNKo.       ',
+    '      :XNNNNNNNNNNNNNNX:      ',
+    '     ;XNNNNNNNNNNNNNNNNX;     ',
+    '    .0WNNNNNNNNNNNNNNNNW0.    ',
+    '    lNNNNNNNNNNNNNNNNNNNNl    ',
+    '    XNNNNNNNNNNNNNNNNNNNNX    ',
+    '    NNNNNNNNNNNNNNNNNNNNNN    ',
+    '    NNNNNNNNNNNNNNNNNNNNNN    ',
+    '    NNNNNNNNNNNNNNNNNNNNNN    ',
+    '    kNNNNNNNNNNNNNNNNNNNNk    ',
+    '    .0NNNNNNNNNNNNNNNNNN0.    ',
+    '     cXNNNNNNNNNNNNNNNNXc     ',
+    '      :KNNNNNNNNNNNNNNK:      ',
+    '       .l0NNNNNNNNNN0l.       ',
+    '         .:lx0KK0xl:.         ',
+    '            ......            '
+  ];
+  document.getElementById('logo').textContent = logo.join('\n');
+
+  // ========================
+  // Clock
+  // ========================
+  function initClock() {
+    var timeEl = document.getElementById('timeDisplay');
+    var dateEl = document.getElementById('dateDisplay');
+    var barEl = document.getElementById('timeBar');
+    var pctEl = document.getElementById('timePct');
+    var days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+    function tick() {
+      var now = new Date();
+      var h = now.getHours(), m = now.getMinutes(), s = now.getSeconds();
+      timeEl.textContent = String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+      dateEl.textContent = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0')+' '+days[now.getDay()];
+      var elapsed = h*3600+m*60+s;
+      var pct = (elapsed/86400)*100;
+      var w=20, f=Math.round(pct/100*w);
+      var c = pct>80?'#ff5555':pct>60?'#f1fa8c':'#50fa7b';
+      barEl.innerHTML = '<span style="color:'+c+'">'+'█'.repeat(f)+'</span><span style="color:#444">'+'█'.repeat(w-f)+'</span>';
+      pctEl.textContent = pct.toFixed(1)+'%';
+    }
+    tick();
+    setInterval(tick, 1000);
+  }
+
+  // ========================
+  // Audio EQ
+  // ========================
+  function initEQ() {
+    var bassInner = document.querySelector('#eqBass .eq-fill-inner');
+    var midInner = document.querySelector('#eqMid .eq-fill-inner');
+    var trebleInner = document.querySelector('#eqTreble .eq-fill-inner');
+    var smooth = { b: 0, m: 0, t: 0 };
+    window._lastVolume = 50;
+    window._lastPeak = 0;
+
+    function animate() {
+      var vol = Math.max(window._lastVolume, window._lastPeak || 0);
+      // If peak > volume, something is actually playing (use peak as intensity)
+      var intensity = Math.max(vol, (window._lastPeak || 0) * 1.2);
+      var tt = Date.now() / 1000;
+      var b = intensity * (0.55 + 0.45 * Math.sin(tt * 1.7 + 0.3));
+      var m = intensity * (0.45 + 0.55 * Math.sin(tt * 2.3 + 1.1));
+      var t = intensity * (0.35 + 0.65 * Math.sin(tt * 3.1 + 2.5));
+      b = Math.min(100, Math.max(4, b));
+      m = Math.min(100, Math.max(3, m));
+      t = Math.min(100, Math.max(4, t));
+      smooth.b += (b - smooth.b) * 0.18;
+      smooth.m += (m - smooth.m) * 0.18;
+      smooth.t += (t - smooth.t) * 0.18;
+      bassInner.style.height = smooth.b + '%';
+      midInner.style.height = smooth.m + '%';
+      trebleInner.style.height = smooth.t + '%';
+      requestAnimationFrame(animate);
+    }
+    animate();
+  }
+
+  // Helpers
+  function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function fm(g) { if (g>=1000) return (g/1024).toFixed(1)+' TB'; return g.toFixed(1)+' GiB'; }
+  function bar(pct, w) {
+    w = w||25; var f = Math.round(pct/100*w); var e = w-f;
+    var c = pct>80?'#ff5555':pct>60?'#f1fa8c':'#50fa7b';
+    return '<span style="color:'+c+'">'+'█'.repeat(f)+'</span><span style="color:#444">'+'█'.repeat(e)+'</span>';
+  }
+
+  // Render system info
+  function renderSystem(data) {
+    var rows = [];
+    if (data.system) {
+      rows.push('<div class="row"><span class="label">user</span><span class="colon">~</span><span class="value">'+esc(data.system.username||'?')+'</span></div>');
+      rows.push('<div class="row"><span class="label">host</span><span class="colon">~</span><span class="value">'+esc(data.system.hostname||'?')+'</span></div>');
+    }
+    rows.push('<div class="sep">'+'─'.repeat(38)+'</div>');
+    if (data.os) {
+      rows.push('<div class="row"><span class="label">os</span><span class="colon">~</span><span class="value">'+esc(data.os.name||'?')+' <span class="dim">'+esc(data.os.version||'')+' ('+esc(data.os.architecture||'')+')</span></span></div>');
+    }
+    if (data.cpu) {
+      rows.push('<div class="row"><span class="label">cpu</span><span class="colon">~</span><span class="value">'+esc(data.cpu.name||'?')+'</span></div>');
+      rows.push('<div class="row"><span class="label"></span><span class="colon"> </span><span class="value dim">'+(data.cpu.cores||0)+' Cores / '+(data.cpu.threads||0)+' Threads @ '+(data.cpu.frequency_mhz||0)+' MHz</span></div>');
+    }
+    if (data.gpu && data.gpu.length) {
+      var gl = data.gpu.filter(function(g){ return g.indexOf('OrayIdd')===-1; });
+      if (!gl.length) gl=data.gpu;
+      rows.push('<div class="row"><span class="label">gpu</span><span class="colon">~</span><span class="value">'+esc(gl[0])+'</span></div>');
+    }
+    if (data.memory) {
+      rows.push('<div class="row"><span class="label">ram</span><span class="colon">~</span><span class="value">'+fm(data.memory.used_gb||0)+' / '+fm(data.memory.total_gb||0)+' ('+(data.memory.percent||0).toFixed(0)+'%)</span></div>');
+      rows.push('<div class="row"><span class="label"></span><span class="colon"> </span><span class="value">'+bar(data.memory.percent||0,28)+'</span></div>');
+    }
+    rows.push('<div class="sep">'+'─'.repeat(38)+'</div>');
+    if (data.disk) {
+      Object.keys(data.disk).forEach(function(l) {
+        var d = data.disk[l];
+        rows.push('<div class="row"><span class="label">disk '+esc(l.replace(':',''))+'</span><span class="colon">~</span><span class="value">'+fm(d.used_gb||0)+' / '+fm(d.total_gb||0)+' ('+(d.percent||0).toFixed(0)+'%)</span></div>');
+        rows.push('<div class="row"><span class="label"></span><span class="colon"> </span><span class="value">'+bar(d.percent||0,28)+'</span></div>');
+      });
+    }
+    if (data.network && data.network.ipv4) {
+      rows.push('<div class="row"><span class="label">ip</span><span class="colon">~</span><span class="value dim">'+esc(data.network.ipv4)+' <span style="color:#555">('+esc(data.network.interface||'')+')</span></span></div>');
+    }
+    if (data.motherboard) {
+      rows.push('<div class="row"><span class="label">mb</span><span class="colon">~</span><span class="value dim">'+esc(data.motherboard)+'</span></div>');
+    }
+    document.getElementById('info').innerHTML = rows.join('');
+  }
+
+  function renderAudio(audio) {
+    var el = document.getElementById('eqVol');
+    if (!audio || audio.volume_percent == null) { el.textContent = 'VOL: --'; return; }
+    var v = audio.volume_percent, m = audio.muted;
+    el.textContent = 'VOL: ' + (m ? 0 : v) + '%' + (m ? ' (MUTED)' : '');
+    window._lastVolume = m ? 0 : v;
+    // Use real audio peak if available, otherwise fall back to volume
+    if (audio.peak != null && audio.peak >= 0) {
+      window._lastPeak = audio.peak * 100;
+    } else {
+      window._lastPeak = window._lastVolume;
+    }
+  }
+
+  function renderNowPlaying(np) {
+    var emptyEl = document.getElementById('npEmpty');
+    var ctEl = document.getElementById('npContent');
+    if (!np || np.status !== 'playing' || !np.title) {
+      emptyEl.style.display = ''; ctEl.style.display = 'none'; return;
+    }
+    emptyEl.style.display = 'none'; ctEl.style.display = 'block';
+    document.getElementById('npArtist').textContent = np.artist || '';
+    document.getElementById('npTitle').textContent = np.title || '';
+    document.getElementById('npAlbum').textContent = np.album_title || '';
+  }
+
+  function load() {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', 'system_info.json', true);
+    xhr.overrideMimeType('application/json; charset=utf-8');
+    xhr.timeout = 4000;
+    xhr.onload = function() {
+      if (xhr.status===200||xhr.status===0) {
+        try {
+          var t = xhr.responseText;
+          if (t.charCodeAt(0)===0xFEFF) t=t.slice(1);
+          var d = JSON.parse(t);
+          renderSystem(d);
+          renderAudio(d.audio);
+          renderNowPlaying(d.now_playing);
+          var n = new Date();
+          document.getElementById('updated').textContent = 'updated '+String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+':'+String(n.getSeconds()).padStart(2,'0');
+        } catch(e) {}
+      }
+    };
+    xhr.send();
+  }
+
+  initClock();
+  initEQ();
+  load();
+  setInterval(load, REFRESH_MS);
+})();
+</script>
+</body>
+</html>
