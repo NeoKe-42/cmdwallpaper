@@ -1,12 +1,12 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><style>
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;height:100%;background:transparent;font-family:"Consolas","Courier New","SimHei",monospace;font-size:14px;overflow:hidden;display:flex;align-items:center;justify-content:center}
-.t{background:rgba(12,12,16,0.92);border:1px solid #333;border-radius:8px;padding:22px 32px;min-width:780px;max-width:960px;box-shadow:0 4px 30px rgba(0,0,0,0.6)}
-.tb{color:#666;font-size:12px;margin-bottom:14px;letter-spacing:1px;display:flex;gap:12px;white-space:nowrap}
+html,body{width:100%;height:100%;background:transparent;font-family:"Consolas","Courier New","SimHei",monospace;font-size:18px;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.t{background:rgba(12,12,16,0.92);border:1px solid #333;border-radius:8px;padding:36px 48px;min-width:960px;max-width:1150px;box-shadow:0 4px 30px rgba(0,0,0,0.6)}
+.tb{color:#666;font-size:15px;margin-bottom:18px;letter-spacing:1px;display:flex;gap:14px;white-space:nowrap}
 .tb .g{color:#0f0}.r{color:#ff5555!important}.y{color:#f1fa8c!important}.b{color:#50fa7b!important}
-.row{display:flex;line-height:1.75}.l{color:#00ff88;min-width:60px;flex-shrink:0}.c{color:#888;margin-right:8px}.v{color:#ddd}.d{color:#888;font-size:13px}.s{color:#444}
-.np{color:#555;font-size:11px;font-style:italic}.np2{display:none}.na{color:#00ccff;font-size:12px}.nt{color:#ddd;font-size:13px}.nal{color:#777;font-size:10px}.nx{color:#888;font-size:11px}
-#u{color:#555;font-size:10px;margin-top:10px;text-align:right}
+.row{display:flex;line-height:2.0}.l{color:#00ff88;min-width:70px;flex-shrink:0}.c{color:#888;margin-right:10px}.v{color:#ddd}.d{color:#888;font-size:16px}.s{color:#444}
+.np{color:#555;font-size:14px;font-style:italic}.np2{display:none}.na{color:#00ccff;font-size:15px}.nt{color:#ddd;font-size:16px}.nal{color:#777;font-size:13px}.nx{color:#888;font-size:14px}
+#u{color:#555;font-size:13px;margin-top:14px;text-align:right}
 </style></head><body>
 <div class="t">
 <div class="tb"><span class="r">●</span><span class="y">●</span><span class="b">●</span> <span class="g" id="tu">m1586@wangke</span>:~/ <span id="td">00:00:00</span><span class="s">|</span><span id="tb"></span><span id="tp">0%</span><span class="s">|</span><span id="dt">----</span></div>
@@ -77,25 +77,34 @@ function load(){
       if(dk)Object.keys(dk).forEach(function(l){var dd=dk[l];r.push('disk '+e(l.replace(':',''))+' '+fm(dd.used_gb||0)+' / '+fm(dd.total_gb||0)+' ('+(dd.percent||0).toFixed(0)+'%) '+br(dd.percent||0,22))});
       if(nw&&nw.ipv4)r.push('<span class="d">ip '+e(nw.ipv4)+' ('+e(nw.interface||'')+')</span>');
       if(mb)r.push('<span class="d">mb '+e(mb)+'</span>');
-      document.getElementById('info').innerHTML=r.join('<br>');
+      // Only update info if content changed (prevents flicker)
+      var infoStr = r.join('<br>');
+      if(S._lastInfo!==infoStr){S._lastInfo=infoStr;document.getElementById('info').innerHTML=infoStr}
 
-      // Audio EQ from WASAPI loopback (JSON)
+      // Audio EQ from JSON
       if(d.audio){S.eqB=d.audio.eq_bass||0;S.eqM=d.audio.eq_mid||0;S.eqT=d.audio.eq_treble||0;S.vol=d.audio.volume||50}
 
-      // Now playing - only show if has artist+title matching music pattern
+      // Now playing
       var np=d.now_playing||{},npEl=document.getElementById('np');
       if(np.status==='playing'&&np.title&&np.artist){
-        var title=np.title||'',artist=np.artist||'';
-        // Skip non-music: URLs, very long text, browser UI labels
-        if(title.length>120||artist.length>120||title.indexOf('http')>=0||title.indexOf('://')>=0||title.indexOf(' - ')>=0){npEl.innerHTML='<span class="np">No media</span>';S.npTitle=null}
+        var title=np.title||'',artist=np.artist||'',album=np.album_title||'';
+        if(title.length>120||artist.length>120||title.indexOf('http')>=0){if(S._lastNp!=='no'){S._lastNp='no';npEl.innerHTML='<span class=\"np\">No media</span>'}S.npTitle=null}
         else{
-          var album=np.album_title||'';
-          if(S.npTitle!==title){S.npTitle=title;S.npStart=Date.now()}
-          var pos=(Date.now()-S.npStart)/1000;
-          npEl.innerHTML='<span class="nx">'+ft(pos)+'</span> <span class="nt">'+e(title)+'</span> <span class="na">'+e(artist)+'</span>'+(album?' <span class="nal">['+e(album)+']</span>':'');
+          var smtcPos=np.position_seconds, smtcDur=np.duration_seconds;
+          if(S.npTitle!==title){S.npTitle=title;S.npStart=smtcPos>0?smtcPos:0;S.npDur=smtcDur||0}
+          var pos,dur=S.npDur||0;
+          if(smtcPos>0) pos=smtcPos;
+          else pos=S.npStart+((Date.now()-S._npTime)/1000);
+          if(!S._npTime||S.npTitle!==title)S._npTime=Date.now();
+
+          var posStr=ft(pos), durStr=dur>0?' / '+ft(dur):'';
+          var barStr='';
+          if(dur>0){var pf=Math.round(Math.min(100,pos/dur*100)/100*18),pe=18-pf;barStr=' <span style=\"color:#50fa7b\">'+'█'.repeat(pf)+'</span><span style=\"color:#333\">'+'█'.repeat(pe)+'</span>'}
+          var npStr='<span class=\"nx\">'+posStr+'</span>'+barStr+durStr+' <span class=\"nt\">'+e(title)+'</span> <span class=\"na\">'+e(artist)+'</span>'+(album?' <span class=\"nal\">['+e(album)+']</span>':'');
+          if(S._lastNp!==npStr){S._lastNp=npStr;npEl.innerHTML=npStr}
         }
       }else{
-        S.npTitle=null;npEl.innerHTML='<span class="np">No media</span>';
+        S.npTitle=null;if(S._lastNp!=='no'){S._lastNp='no';npEl.innerHTML='<span class=\"np\">No media</span>'}
       }
 
       // Update time

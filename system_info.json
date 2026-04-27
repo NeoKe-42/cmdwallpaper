@@ -1,10 +1,10 @@
 ﻿{
     "audio":  {
                   "muted":  false,
-                  "eq_bass":  79.8,
-                  "volume":  90,
-                  "eq_treble":  62.1,
-                  "eq_mid":  88.8
+                  "eq_bass":  0,
+                  "volume":  0,
+                  "eq_treble":  0,
+                  "eq_mid":  0
               },
     "motherboard":  "LENOVO LNVNB161216",
     "cpu":  {
@@ -14,9 +14,11 @@
                 "cores":  8
             },
     "now_playing":  {
-                        "artist":  "P.T. Adamczyk / Sora Lion",
-                        "title":  "Hardest to Be (From \"Cyberpunk 2077: Phantom Liberty\" Score)",
-                        "source":  "qqmusic",
+                        "album_title":  "All Falls Down",
+                        "duration_seconds":  199.1,
+                        "position_seconds":  73.8,
+                        "title":  "All Falls Down",
+                        "artist":  "Alan Walker/Noah Cyrus/Digital Farm Animals/Juliander",
                         "status":  "playing"
                     },
     "disk":  {
@@ -56,12 +58,12 @@
                "build":  "26120"
            },
     "memory":  {
-                   "used_gb":  14.55,
+                   "used_gb":  12.540000000000003,
                    "total_gb":  31.19,
-                   "percent":  46.6,
-                   "available_gb":  16.64
+                   "percent":  40.2,
+                   "available_gb":  18.65
                },
-    "timestamp":  "2026-04-27T13:37:14.6057885Z",
+    "timestamp":  "2026-04-27T13:52:47.2713898Z",
     "system":  {
                    "username":  "m1586",
                    "hostname":  "WANGKE"
