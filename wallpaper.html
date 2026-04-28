@@ -183,46 +183,63 @@ if (typeof window.wallpaperRegisterMediaTimelineListener === 'function') {
 }
 
 // ── EQ: Wallpaper Engine native audio listener ───────────
-var _weHasAudio = false;
-var _weLastAudio = 0;
-var _eqDebug = { registered: false, frames: 0, lastLength: 0, lastError: '' };
+var EQ = {
+  registered: false,
+  hasWallpaperAudio: false,
+  frames: 0,
+  lastLen: 0,
+  lastFrameAt: 0,
+  lastNonZeroAt: 0,
+  lastError: '',
+  source: 'none'
+};
 
-function updateEqFromWallpaperAudio(audioArray) {
-  if (!audioArray || audioArray.length < 128) return;
-  var bass = 0, mid = 0, treb = 0;
-  var bc = 0, mc = 0, tc = 0;
-  for (var i = 0; i < 64; i++) {
-    var left = Math.min(Number(audioArray[i]) || 0, 1);
-    var right = Math.min(Number(audioArray[i + 64]) || 0, 1);
-    var v = (left + right) / 2;
-    if (i < 8)       { bass += v; bc++; }
-    else if (i < 32) { mid  += v; mc++; }
-    else             { treb += v; tc++; }
+function wallpaperAudioListener(audioArray) {
+  try {
+    if (!audioArray || audioArray.length < 128) {
+      EQ.lastError = 'invalid audioArray length';
+      return;
+    }
+    var bass = 0, mid = 0, treble = 0;
+    var bc = 0, mc = 0, tc = 0;
+    var sum = 0;
+    for (var i = 0; i < 64; i++) {
+      var left = Math.min(Number(audioArray[i]) || 0, 1);
+      var right = Math.min(Number(audioArray[i + 64]) || 0, 1);
+      var v = (left + right) / 2;
+      sum += v;
+      if (i < 8)       { bass += v; bc++; }
+      else if (i < 32) { mid  += v; mc++; }
+      else             { treble += v; tc++; }
+    }
+    S.eqB = Math.min(100, (bass / Math.max(1, bc)) * 220);
+    S.eqM = Math.min(100, (mid  / Math.max(1, mc)) * 260);
+    S.eqT = Math.min(100, (treble / Math.max(1, tc)) * 320);
+    EQ.hasWallpaperAudio = true;
+    EQ.frames++;
+    EQ.lastLen = audioArray.length;
+    EQ.lastFrameAt = Date.now();
+    EQ.source = 'WE-AUDIO';
+    if (sum > 0.001) EQ.lastNonZeroAt = Date.now();
+  } catch (err) {
+    EQ.lastError = String(err && err.message ? err.message : err);
   }
-  S.eqB = Math.min(100, (bass / Math.max(1, bc)) * 180);
-  S.eqM = Math.min(100, (mid  / Math.max(1, mc)) * 220);
-  S.eqT = Math.min(100, (treb / Math.max(1, tc)) * 260);
-  _weHasAudio = true;
-  _weLastAudio = Date.now();
-  _eqDebug.frames++;
-  _eqDebug.lastLength = audioArray.length;
 }
 
 try {
   if (typeof window.wallpaperRegisterAudioListener === 'function') {
-    window.wallpaperRegisterAudioListener(updateEqFromWallpaperAudio);
-    _eqDebug.registered = true;
+    window.wallpaperRegisterAudioListener(wallpaperAudioListener);
+    EQ.registered = true;
   } else {
-    _eqDebug.lastError = 'wallpaperRegisterAudioListener not available';
+    EQ.lastError = 'wallpaperRegisterAudioListener unavailable';
   }
 } catch (err) {
-  _eqDebug.lastError = String(err && err.message ? err.message : err);
+  EQ.lastError = String(err && err.message ? err.message : err);
 }
 
-// Fallback: eq_data.json only when WE audio is unavailable
+// Fallback: data/eq_data.json only when WE audio is unavailable
 setInterval(function () {
-  if (_weHasAudio && Date.now() - _weLastAudio < 3000) return;
-  _weHasAudio = false;
+  if (EQ.hasWallpaperAudio && Date.now() - EQ.lastFrameAt < 3000) return;
   var x = new XMLHttpRequest();
   x.open('GET', 'data/eq_data.json?cb=' + Date.now(), true);
   x.timeout = 300;
@@ -232,10 +249,11 @@ setInterval(function () {
       S.eqB = Number(d.b) || 0;
       S.eqM = Number(d.m) || 0;
       S.eqT = Number(d.t) || 0;
-    } catch (e) {}
+      EQ.source = 'JSON-FALLBACK';
+    } catch (e) { EQ.lastError = 'fallback parse failed'; }
   };
-  x.onerror = function () {};
-  x.ontimeout = function () {};
+  x.onerror = function () { EQ.lastError = 'fallback request failed'; };
+  x.ontimeout = function () { EQ.lastError = 'fallback timeout'; };
   x.send();
 }, 500);
 
@@ -244,9 +262,12 @@ setInterval(function () {
   var w=28;
   var sm=S.sm,b=S.eqB||0,m=S.eqM||0,t=S.eqT||0;
   sm.b+=(b-sm.b)*0.4;sm.m+=(m-sm.m)*0.4;sm.t+=(t-sm.t)*0.4;
-  document.getElementById('eqb').innerHTML='<span class="eq-b">'+'█'.repeat(Math.max(0,Math.round(sm.b/100*w)))+'</span><span class="eq-s">'+'█'.repeat(w-Math.max(0,Math.round(sm.b/100*w)))+'</span>';
-  document.getElementById('eqm').innerHTML='<span class="eq-m">'+'█'.repeat(Math.max(0,Math.round(sm.m/100*w)))+'</span><span class="eq-s">'+'█'.repeat(w-Math.max(0,Math.round(sm.m/100*w)))+'</span>';
-  document.getElementById('eqt').innerHTML='<span class="eq-t">'+'█'.repeat(Math.max(0,Math.round(sm.t/100*w)))+'</span><span class="eq-s">'+'█'.repeat(w-Math.max(0,Math.round(sm.t/100*w)))+'</span>';
+  var bf=Math.max(0,Math.min(w,Math.round(sm.b/100*w)));
+  var mf=Math.max(0,Math.min(w,Math.round(sm.m/100*w)));
+  var tf=Math.max(0,Math.min(w,Math.round(sm.t/100*w)));
+  document.getElementById('eqb').innerHTML='<span class="eq-b">'+'█'.repeat(bf)+'</span><span class="eq-s">'+'█'.repeat(w-bf)+'</span>';
+  document.getElementById('eqm').innerHTML='<span class="eq-m">'+'█'.repeat(mf)+'</span><span class="eq-s">'+'█'.repeat(w-mf)+'</span>';
+  document.getElementById('eqt').innerHTML='<span class="eq-t">'+'█'.repeat(tf)+'</span><span class="eq-s">'+'█'.repeat(w-tf)+'</span>';
   setTimeout(eqAnm,100);
 })();
 
@@ -417,11 +438,23 @@ setInterval(function(){
   else if (S._artLoaded) artState = 'ART:FALLBACK';
   else artState = 'ART:NONE';
 
-  var mediaState = mediaState.hasNativeMedia ? 'MEDIA:NATIVE' : 'MEDIA:JSON';
+  var mediaSrc = mediaState.hasNativeMedia ? 'MEDIA:NATIVE' : 'MEDIA:JSON';
 
-  var eqState = _weHasAudio ? 'WE-AUDIO frames=' + _eqDebug.frames + ' len=' + _eqDebug.lastLength : ('EQ-FALLBACK ') + (_eqDebug.registered ? 'registered' : 'not-registered');
+  var eqState;
+  if (!EQ.registered) {
+    eqState = 'EQ:NOT-REGISTERED';
+  } else if (EQ.frames === 0) {
+    eqState = 'EQ:REGISTERED-NO-FRAMES';
+  } else if (EQ.hasWallpaperAudio && Date.now() - EQ.lastFrameAt < 3000) {
+    var nz = EQ.lastNonZeroAt ? ((Date.now()-EQ.lastNonZeroAt)/1000).toFixed(1)+'s' : '?';
+    eqState = 'EQ:WE-AUDIO frames=' + EQ.frames + ' len=' + EQ.lastLen + ' nz=' + nz;
+  } else if (EQ.source === 'JSON-FALLBACK') {
+    eqState = 'EQ:JSON-FALLBACK';
+  } else {
+    eqState = 'EQ:STALE';
+  }
 
-  document.getElementById('u').innerHTML = '<span style="color:#666">[' + ts + '] [' + artState + '] [' + mediaState + '] [' + eqState + ']</span>';
+  document.getElementById('u').innerHTML = '<span style="color:#666">[' + ts + '] [' + artState + '] [' + mediaSrc + '] [' + eqState + ']</span>';
 }, 1000);
 })();</script>
 </body></html>
