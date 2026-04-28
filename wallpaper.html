@@ -212,9 +212,13 @@ function wallpaperAudioListener(audioArray) {
       else if (i < 32) { mid  += v; mc++; }
       else             { treble += v; tc++; }
     }
-    S.eqB = Math.min(100, (bass / Math.max(1, bc)) * 220);
-    S.eqM = Math.min(100, (mid  / Math.max(1, mc)) * 260);
-    S.eqT = Math.min(100, (treble / Math.max(1, tc)) * 320);
+    var nextB = Math.min(100, (bass / Math.max(1, bc)) * 450);
+    var nextM = Math.min(100, (mid  / Math.max(1, mc)) * 550);
+    var nextT = Math.min(100, (treble / Math.max(1, tc)) * 700);
+    // Smooth to avoid flicker, but responsive
+    S.eqB = S.eqB * 0.65 + nextB * 0.35;
+    S.eqM = S.eqM * 0.60 + nextM * 0.40;
+    S.eqT = S.eqT * 0.55 + nextT * 0.45;
     EQ.hasWallpaperAudio = true;
     EQ.frames++;
     EQ.lastLen = audioArray.length;
@@ -237,7 +241,7 @@ try {
   EQ.lastError = String(err && err.message ? err.message : err);
 }
 
-// ── Fallback: data/eq_data.json only when WE audio is unavailable
+// ── JSON fallback: only when no WE audio ──
 setInterval(function () {
   if (EQ.hasWallpaperAudio && Date.now() - EQ.lastFrameAt < 3000) return;
   var x = new XMLHttpRequest();

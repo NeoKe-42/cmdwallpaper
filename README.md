@@ -67,3 +67,9 @@ dotnet publish cmdwallpaper_agent.csproj -c Release -r win-x64 -o publish
 **Chinese text garbled**: save files as UTF-8 with BOM.
 
 **Permission denied**: `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser`
+
+## Audio Probe
+
+If EQ shows `REGISTERED-NO-FRAMES`, import `audio_probe/project.json` into Wallpaper Engine as a separate wallpaper.
+- If audio_probe also shows `frames=0`, the issue is Wallpaper Engine audio capture / audio device, not cmdwallpaper.
+- If audio_probe receives frames, then the main wallpaper integration needs to be checked.

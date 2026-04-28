@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  background: #050805;
+  color: #50fa7b;
+  font-family: Consolas, monospace;
+  font-size: 22px;
+  overflow: hidden;
+}
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.panel {
+  width: 90vw;
+  max-width: 1000px;
+  border: 1px solid #335;
+  padding: 24px;
+  background: #0c0c0c;
+}
+.bar {
+  white-space: pre;
+  line-height: 1.5;
+}
+.dim {
+  color: #777;
+}
+</style>
+</head>
+<body>
+<div class="panel">
+  <div>CMD WALLPAPER AUDIO PROBE</div>
+  <div id="status" class="dim">init...</div>
+  <div id="bars" class="bar"></div>
+</div>
+
+<script>
+(function () {
+  var state = {
+    hasApi: typeof window.wallpaperRegisterAudioListener === 'function',
+    registered: false,
+    frames: 0,
+    len: 0,
+    sum: 0,
+    max: 0,
+    lastFrameAt: 0,
+    firstValues: [],
+    error: ''
+  };
+
+  function drawBars(audioArray) {
+    var lines = [];
+    var w = 40;
+
+    for (var i = 0; i < 16; i++) {
+      var v = Math.min(Number(audioArray[i]) || 0, 1);
+      var f = Math.round(v * w);
+      lines.push(
+        String(i).padStart(2, '0') + ' [' +
+        '█'.repeat(f) +
+        '░'.repeat(w - f) +
+        '] ' + v.toFixed(3)
+      );
+    }
+
+    document.getElementById('bars').textContent = lines.join('\n');
+  }
+
+  function wallpaperAudioListener(audioArray) {
+    try {
+      if (!audioArray) return;
+
+      var sum = 0;
+      var max = 0;
+
+      for (var i = 0; i < audioArray.length; i++) {
+        var v = Number(audioArray[i]) || 0;
+        sum += v;
+        if (v > max) max = v;
+      }
+
+      state.frames++;
+      state.len = audioArray.length;
+      state.sum = sum;
+      state.max = max;
+      state.lastFrameAt = Date.now();
+      state.firstValues = Array.prototype.slice.call(audioArray, 0, 8).map(function (v) {
+        return Number(v || 0).toFixed(3);
+      });
+
+      drawBars(audioArray);
+    } catch (e) {
+      state.error = String(e && e.message ? e.message : e);
+    }
+  }
+
+  try {
+    if (state.hasApi) {
+      window.wallpaperRegisterAudioListener(wallpaperAudioListener);
+      state.registered = true;
+    } else {
+      state.error = 'wallpaperRegisterAudioListener unavailable';
+    }
+  } catch (e) {
+    state.error = String(e && e.message ? e.message : e);
+  }
+
+  setInterval(function () {
+    var age = state.lastFrameAt ? ((Date.now() - state.lastFrameAt) / 1000).toFixed(1) + 's ago' : 'never';
+
+    document.getElementById('status').innerHTML =
+      'hasApi=' + state.hasApi +
+      ' | registered=' + state.registered +
+      ' | frames=' + state.frames +
+      ' | len=' + state.len +
+      ' | sum=' + state.sum.toFixed(3) +
+      ' | max=' + state.max.toFixed(3) +
+      ' | last=' + age +
+      '<br>first8=' + state.firstValues.join(', ') +
+      '<br>error=' + state.error;
+  }, 500);
+})();
+</script>
+</body>
+</html>
