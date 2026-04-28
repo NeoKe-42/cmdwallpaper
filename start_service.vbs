@@ -7,6 +7,10 @@ strDir = objFSO.GetParentFolderName(WScript.ScriptFullName)
 strSmtc = """" & strDir & "\smtc_reader.exe"" """ & strDir & """"
 objShell.Run strSmtc, 0, False
 
+' Album art extractor: extracts album art from SMTC thumbnails
+strArt = """" & strDir & "\art_extractor\publish\art_extractor.exe"" """ & strDir & """"
+objShell.Run strArt, 0, False
+
 ' System info updater
 strCmd = "powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File """ & strDir & "\system_info_updater.ps1"" -UpdateInterval 1"
 objShell.Run strCmd, 0, False

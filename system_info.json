@@ -23,25 +23,25 @@
                     },
     "disk":  {
                  "F:":  {
-                            "used_gb":  128.2,
+                            "used_gb":  128.48,
                             "total_gb":  150.25,
-                            "percent":  85.3,
+                            "percent":  85.5,
                             "mount":  "F:\\",
-                            "free_gb":  22.05
+                            "free_gb":  21.77
                         },
                  "C:":  {
-                            "used_gb":  399.5,
+                            "used_gb":  400.41999999999996,
                             "total_gb":  474.71,
-                            "percent":  84.2,
+                            "percent":  84.4,
                             "mount":  "C:\\",
-                            "free_gb":  75.21
+                            "free_gb":  74.29
                         },
                  "D:":  {
-                            "used_gb":  651.65,
+                            "used_gb":  651.67,
                             "total_gb":  781.25,
                             "percent":  83.4,
                             "mount":  "D:\\",
-                            "free_gb":  129.6
+                            "free_gb":  129.58
                         }
              },
     "os":  {
@@ -51,12 +51,12 @@
                "build":  "26120"
            },
     "memory":  {
-                   "used_gb":  11.190000000000001,
+                   "used_gb":  9.5600000000000023,
                    "total_gb":  31.19,
-                   "percent":  35.9,
-                   "available_gb":  20
+                   "percent":  30.7,
+                   "available_gb":  21.63
                },
-    "timestamp":  "2026-04-28T00:57:08.1882714Z",
+    "timestamp":  "2026-04-28T01:35:11.5589757Z",
     "system":  {
                    "username":  "m1586",
                    "hostname":  "WANGKE"

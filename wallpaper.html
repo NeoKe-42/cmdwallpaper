@@ -1,7 +1,7 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;background:transparent;font-family:"Consolas","Courier New","SimHei",monospace;font-size:18px;overflow:hidden;display:flex;align-items:center;justify-content:center}
-.t{background:rgba(12,12,16,0.92);border:1px solid #333;border-radius:8px;padding:36px 48px;min-width:960px;max-width:1150px;box-shadow:0 4px 30px rgba(0,0,0,0.6)}
+.t{background:rgba(12,12,16,0.92);border:1px solid #333;border-radius:8px;padding:36px 48px;min-width:960px;max-width:1150px;box-shadow:0 4px 30px rgba(0,0,0,0.6);position:relative}
 .tb{color:#666;font-size:15px;margin-bottom:18px;letter-spacing:1px;display:flex;gap:14px;white-space:nowrap}
 .tb .g{color:#0f0}.r{color:#ff5555!important}.y{color:#f1fa8c!important}.b{color:#50fa7b!important}
 .row{display:flex;line-height:2.0}.l{color:#00ff88;min-width:70px;flex-shrink:0}.c{color:#888;margin-right:10px}.v{color:#ddd}.d{color:#888;font-size:16px}.s{color:#444}
@@ -14,6 +14,7 @@ html,body{width:100%;height:100%;background:transparent;font-family:"Consolas","
 <div class="row"><div class="l">np</div><div class="c">~</div><div class="v" id="np"></div></div>
 <div class="row"><div class="l">eq</div><div class="c">~</div><div class="v" id="eq"></div></div>
 <div id="u"></div>
+<img id="art" style="display:none;position:absolute;left:48px;bottom:36px;width:130px;height:130px;border-radius:6px;object-fit:cover;border:1px solid #333;box-shadow:0 2px 12px rgba(0,0,0,0.5);z-index:1">
 </div>
 <script>
 (function(){
@@ -91,18 +92,28 @@ function load(){
       var np=d.now_playing||{},npEl=document.getElementById('np');
       if(np.status==='playing'&&np.title&&np.artist){
         var title=np.title||'',artist=np.artist||'',album=np.album_title||'';
-        if(title.length>120||artist.length>120||title.indexOf('http')>=0){S.npTitle=null;npEl.innerHTML='<span class=\"np\">No media</span>'}
+        if(title.length>120||artist.length>120||title.indexOf('http')>=0){S.npTitle=null;S._artRetries=0;npEl.innerHTML='<span class=\"np\">No media</span>';document.getElementById('art').style.display='none'}
         else{
           var sp=np.position_seconds, sd=np.duration_seconds;
-          if(S.npTitle!==title){S.npTitle=title}
+          if(S.npTitle!==title){S.npTitle=title;S._artRetries=6;document.getElementById('art').style.display='none'}
           if(sp>=1){S.npStart=Date.now()-sp*1000;S.npDur=sd||0}
+          // Album art: retry a few times (file may still be extracting)
+          var art=document.getElementById('art');
+          if(S._artRetries>0&&sp>=1&&art.style.display==='none'){
+            S._artRetries--;
+            var ts=encodeURIComponent(title);
+            art.onload=function(){this.style.display='block';this.onerror=function(){}}
+            art.onerror=function(){if(this.src.indexOf('.png')!==-1)this.src='album_art.jpg?cb='+ts}
+            art.src='album_art.png?cb='+ts;
+          }
           var timeStr='';
           if(sp>=1){timeStr='<span class=\"nx\">'+ft(sp)+'</span>'; if(sd>0){var f=Math.round(sp/sd*18);if(f>18)f=18;timeStr+=' <span style=\"color:#50fa7b\">'+'█'.repeat(f)+'</span><span style=\"color:#333\">'+'█'.repeat(18-f)+'</span> / '+ft(sd)}else{timeStr+=' '}}
           var ns=timeStr+'<span class=\"nt\">'+e(title)+'</span> <span class=\"na\">'+e(artist)+'</span>'+(album?' <span class=\"nal\">['+e(album)+']</span>':'');
           if(S._ln!==ns){S._ln=ns;npEl.innerHTML=ns}
         }
       }else{
-        S.npTitle=null;S._ln='';npEl.innerHTML='<span class=\"np\">No media</span>';
+        S.npTitle=null;S._ln='';S._artRetries=0;npEl.innerHTML='<span class=\"np\">No media</span>';
+        document.getElementById('art').style.display='none';
       }
 
       // Update time
