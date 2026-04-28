@@ -57,15 +57,22 @@ body{display:flex;align-items:center;justify-content:center}
 (function(){
 var S={
   npTitle:null,npStart:0,npDur:0,sm:{b:0,m:0,t:0},
-  _artVer:-1,_artShowingPlaceholder:true,
-  // WE native media state
-  mediaAvailable:false, mediaEnabled:false,
-  mediaTitle:'', mediaArtist:'', mediaAlbum:'', mediaAlbumArtist:'',
-  mediaThumbnail:'', mediaPrimaryColor:'', mediaTextColor:'',
-  mediaPlaybackState:'stopped',
-  mediaPosition:0, mediaDuration:0, mediaTimelineTs:0,
-  // Fallback
-  _useFallback:false, _smtcHasArt:false, _smtcArtVer:0
+  _artLoaded:false,_artRetries:0,_lastNpState:null
+};
+
+// ── WE native media state ─────────────────────────────────
+var M = {
+  hasNativeMedia: false,
+  hasNativeArt: false,
+  title: '',
+  artist: '',
+  album: '',
+  thumbnail: '',
+  playbackState: 'stopped',
+  position: 0,
+  duration: 0,
+  lastTimelineUpdate: 0,
+  lastThumbAt: 0
 };
 
 // ── Clock (1s JS local) ──────────────────────────────────
@@ -88,52 +95,87 @@ function e(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replac
 function fm(g){return g>=1000?(g/1024).toFixed(1)+' TB':g.toFixed(1)+' GiB'}
 function ft(s){s=isNaN(s)?0:Math.max(0,Math.round(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
 
-// ── WE Native Media Integration (primary source) ─────────
-// MediaStatusListener
-if(typeof window.wallpaperRegisterMediaStatusListener==='function'){
-  window.wallpaperRegisterMediaStatusListener(function(ev){
-    S.mediaEnabled=!!ev.enabled;
-    S.mediaAvailable=!!ev.enabled;
-  });
+// ── setAlbumArt helper ───────────────────────────────────
+function setAlbumArt(src, source) {
+  var art = document.getElementById('art');
+  var ph = document.getElementById('artph');
+  if (!art || !ph || !src) return;
+
+  art.onload = function () {
+    art.style.display = 'block';
+    ph.style.display = 'none';
+    if(source==='native') M.hasNativeArt = true;
+    S._artLoaded = true;
+  };
+
+  art.onerror = function () {
+    if (source === 'native') {
+      M.hasNativeArt = false;
+      art.style.display = 'none';
+      ph.style.display = '';
+    }
+  };
+
+  art.src = src;
 }
-// MediaPropertiesListener
-if(typeof window.wallpaperRegisterMediaPropertiesListener==='function'){
-  window.wallpaperRegisterMediaPropertiesListener(function(ev){
-    S.mediaTitle=ev.title||'';
-    S.mediaArtist=ev.artist||'';
-    S.mediaAlbum=ev.albumTitle||'';
-    S.mediaAlbumArtist=ev.albumArtist||'';
-    S.mediaAvailable=true;
-  });
+
+// ── WE Native Media Listeners ────────────────────────────
+// Thumbnail: set directly (base64 PNG)
+function wallpaperMediaThumbnailListener(event) {
+  if (!event || !event.thumbnail) {
+    M.hasNativeArt = false;
+    return;
+  }
+  M.hasNativeMedia = true;
+  M.thumbnail = event.thumbnail;
+  M.lastThumbAt = Date.now();
+  setAlbumArt(event.thumbnail, 'native');
 }
-// MediaThumbnailListener (base64 PNG)
-if(typeof window.wallpaperRegisterMediaThumbnailListener==='function'){
-  window.wallpaperRegisterMediaThumbnailListener(function(ev){
-    S.mediaThumbnail=ev.thumbnail||'';
-    S.mediaPrimaryColor=ev.primaryColor||'';
-    S.mediaTextColor=ev.textColor||'';
-  });
+if (typeof window.wallpaperRegisterMediaThumbnailListener === 'function') {
+  window.wallpaperRegisterMediaThumbnailListener(wallpaperMediaThumbnailListener);
 }
-// MediaPlaybackListener
-if(typeof window.wallpaperRegisterMediaPlaybackListener==='function'){
-  window.wallpaperRegisterMediaPlaybackListener(function(ev){
-    if(!window.wallpaperMediaIntegration)return;
-    if(ev.state===window.wallpaperMediaIntegration.PLAYBACK_PLAYING)
-      S.mediaPlaybackState='playing';
-    else if(ev.state===window.wallpaperMediaIntegration.PLAYBACK_PAUSED)
-      S.mediaPlaybackState='paused';
-    else
-      S.mediaPlaybackState='stopped';
-  });
+
+// Properties: title, artist, album
+function wallpaperMediaPropertiesListener(event) {
+  if (!event) return;
+  M.hasNativeMedia = true;
+  M.title = event.title || '';
+  M.artist = event.artist || '';
+  M.album = event.albumTitle || '';
+  if (M.title) document.getElementById('nptitle').textContent = M.title;
+  if (M.artist) document.getElementById('npartist').textContent = M.artist;
+  document.getElementById('npalbum').textContent = M.album ? '[' + M.album + ']' : '';
 }
-// MediaTimelineListener
-if(typeof window.wallpaperRegisterMediaTimelineListener==='function'){
-  window.wallpaperRegisterMediaTimelineListener(function(ev){
-    S.mediaPosition=Number(ev.position)||0;
-    S.mediaDuration=Number(ev.duration)||0;
-    S.mediaTimelineTs=Date.now();
-    S.mediaAvailable=true;
-  });
+if (typeof window.wallpaperRegisterMediaPropertiesListener === 'function') {
+  window.wallpaperRegisterMediaPropertiesListener(wallpaperMediaPropertiesListener);
+}
+
+// Playback state
+function wallpaperMediaPlaybackListener(event) {
+  if (!event || !window.wallpaperMediaIntegration) return;
+  M.hasNativeMedia = true;
+  if (event.state === window.wallpaperMediaIntegration.PLAYBACK_PLAYING) {
+    M.playbackState = 'playing';
+  } else if (event.state === window.wallpaperMediaIntegration.PLAYBACK_PAUSED) {
+    M.playbackState = 'paused';
+  } else {
+    M.playbackState = 'stopped';
+  }
+}
+if (typeof window.wallpaperRegisterMediaPlaybackListener === 'function') {
+  window.wallpaperRegisterMediaPlaybackListener(wallpaperMediaPlaybackListener);
+}
+
+// Timeline: position, duration
+function wallpaperMediaTimelineListener(event) {
+  if (!event) return;
+  M.hasNativeMedia = true;
+  M.position = Number(event.position) || 0;
+  M.duration = Number(event.duration) || 0;
+  M.lastTimelineUpdate = Date.now();
+}
+if (typeof window.wallpaperRegisterMediaTimelineListener === 'function') {
+  window.wallpaperRegisterMediaTimelineListener(wallpaperMediaTimelineListener);
 }
 
 // ── EQ: Wallpaper Engine native audio listener ───────────
@@ -242,142 +284,140 @@ setInterval(function () {
 
 // ── Now playing display update (every 500ms) ─────────────
 setInterval(function(){
-  var art=document.getElementById('art');
-  var artph=document.getElementById('artph');
-  var hasMedia=S.mediaEnabled&&S.mediaAvailable&&S.mediaTitle;
-  var state=S.mediaPlaybackState;
-  var pos, dur, title, artist, album;
+  var hasMedia = M.hasNativeMedia && M.title;
+  var pos, dur;
 
-  if(hasMedia){
-    // ── Primary: WE native media ─────────────────────────
-    title=S.mediaTitle; artist=S.mediaArtist; album=S.mediaAlbum;
-    dur=S.mediaDuration;
-
+  if (hasMedia) {
     // Local position interpolation
-    if(state==='playing'&&S.mediaDuration>0){
-      pos=Math.min(S.mediaPosition+(Date.now()-S.mediaTimelineTs)/1000, S.mediaDuration);
-    }else{
-      pos=S.mediaPosition;
+    if (M.playbackState === 'playing' && M.duration > 0) {
+      pos = Math.min(M.position + (Date.now() - M.lastTimelineUpdate) / 1000, M.duration);
+    } else {
+      pos = M.position;
     }
+    dur = M.duration;
 
-    S._useFallback=false;
+    var pct = dur > 0 ? Math.min(99.9, pos / dur * 100) : 0;
+    var prog = '<span class="time" id="postime">' + ft(pos) + '</span> ' + pg(pct, 30) + ' <span class="time">/ ' + ft(dur) + '</span>';
+    if (S._lastNpProg !== prog) { S._lastNpProg = prog; document.getElementById('npprog').innerHTML = prog; }
+    S.npTitle = M.title; // Keep for position ticker
+    S.npStart = Date.now() - pos * 1000;
+    S.npDur = dur;
+    S._lastNpState = 'playing';
 
-    // ── Album art: WE thumbnail (base64) ──────────────────
-    if(S.mediaThumbnail){
-      var thumbSrc='data:image/png;base64,'+S.mediaThumbnail;
-      if(S._lastThumbSrc!==thumbSrc){
-        S._lastThumbSrc=thumbSrc; S._artShowingPlaceholder=false;
-        art.src=thumbSrc;
-        (function poll(){
-          if(art.complete){
-            if(art.naturalWidth>0){
-              art.style.display='block'; artph.style.display='none';
-            }else{
-              art.style.display='none'; artph.style.display='';
-              S._artShowingPlaceholder=true;
-            }
-          }else{setTimeout(poll,100)}
-        })();
-      }
-    }else if(!S._artShowingPlaceholder){
-      // No thumbnail from WE — try smtc fallback
-      S._artShowingPlaceholder=true;
-      art.style.display='none'; artph.style.display='';
+    // Local file fallback — only if native art not available
+    if (!M.hasNativeArt && !S._artLoaded && S._artRetries > 0 && pos >= 1) {
+      S._artRetries--;
+      var ts = encodeURIComponent(M.title || Date.now());
+      var art = document.getElementById('art');
+      art.onload = function () {
+        this.style.display = 'block';
+        document.getElementById('artph').style.display = 'none';
+        S._artLoaded = true;
+      };
+      art.onerror = function () {
+        if (this.src.indexOf('album_art.png') !== -1) {
+          this.src = 'data/album_art.jpg?cb=' + ts;
+        } else {
+          this.style.display = 'none';
+          document.getElementById('artph').style.display = '';
+        }
+      };
+      art.src = 'data/album_art.png?cb=' + ts;
     }
-  }else{
-    // ── Fallback: smtc_data.json ─────────────────────────
-    S._useFallback=true;
-    // smtc_data is loaded by separate poller below
-    // Art handled in smtc poller
-  }
-
-  // ── Build display ──────────────────────────────────────
-  if(hasMedia||(!S._useFallback&&S.npTitle)){
-    // Use either WE native or last-known smtc data
-    if(!hasMedia&&S.npTitle){
-      title=S.npTitle; artist=S._lastArtist; album=S._lastAlbum;
+  } else {
+    // Reset when no media — but preserve native art
+    S.npTitle = null;
+    if (!M.hasNativeArt) {
+      document.getElementById('art').style.display = 'none';
+      document.getElementById('artph').style.display = '';
     }
-    if(state==='playing'||(S._useFallback&&S.npTitle)){
-      var pct=dur>0?Math.min(99.9,pos/dur*100):0;
-      var prog='<span class="time" id="postime">'+ft(pos)+'</span> '+pg(pct,30)+' <span class="time">/ '+ft(dur)+'</span>';
-      if(S._lastNpProg!==prog){S._lastNpProg=prog;document.getElementById('npprog').innerHTML=prog}
-      if(S._lastNpTitle!==title){S._lastNpTitle=title;document.getElementById('nptitle').textContent=title}
-      if(S._lastNpArtist!==artist){S._lastNpArtist=artist;document.getElementById('npartist').textContent=artist}
-      var albStr=album?'['+album+']':'';
-      if(S._lastNpAlbum!==albStr){S._lastNpAlbum=albStr;document.getElementById('npalbum').textContent=albStr}
-    }
-  }else if(!S._useFallback){
-    // No media at all
-    if(S._lastNpState!=='none'){S._lastNpState='none';
-      document.getElementById('npprog').innerHTML='<span class="time">--:--</span> no media';
-      document.getElementById('nptitle').textContent='';
-      document.getElementById('npartist').textContent='';
-      document.getElementById('npalbum').textContent='';
-      art.style.display='none'; artph.style.display='';
-      S._artShowingPlaceholder=true;
+    if (S._lastNpState !== 'none') {
+      S._lastNpState = 'none';
+      document.getElementById('npprog').innerHTML = '<span class="time">--:--</span> no media';
+      document.getElementById('nptitle').textContent = '';
+      document.getElementById('npartist').textContent = '';
+      document.getElementById('npalbum').textContent = '';
+      S._artLoaded = false;
+      S._artRetries = 0;
     }
   }
-},500);
+}, 500);
 
-// ── smtc_data.json fallback poller (only when WE media unavailable) ──
+// ── Position ticker (500ms, JS interpolation) ────────────
+setInterval(function(){
+  if (!S.npTitle) return;
+  var p = document.getElementById('postime');
+  if (p) p.textContent = ft((Date.now() - S.npStart) / 1000);
+}, 500);
+
+// ── smtc_data.json fallback poller ───────────────────────
 (function loadSmtc(){
-  if(!S._useFallback){setTimeout(loadSmtc,2000);return;} // Don't poll when WE native active
-  var x=new XMLHttpRequest();
-  x.open('GET','data/smtc_data.json',true);x.overrideMimeType('application/json; charset=utf-8');x.timeout=2000;
-  x.onload=function(){
-    if(x.status!==200&&x.status!==0)return;
-    try{var t=x.responseText;if(t.charCodeAt(0)===0xFEFF)t=t.slice(1);var d=JSON.parse(t);
-      if(d.status==='playing'&&d.title&&d.artist){
-        var sp=d.pos||0, sd=d.dur||0;
-        S.npTitle=d.title; S._lastArtist=d.artist; S._lastAlbum=d.album||'';
-        S.npStart=Date.now()-sp*1000; S.npDur=sd||0;
-        S._smtcHasArt=!!d.has_art; S._smtcArtVer=d.art_version||0;
+  if (M.hasNativeMedia) { setTimeout(loadSmtc, 2000); return; }
+  var x = new XMLHttpRequest();
+  x.open('GET', 'data/smtc_data.json', true);
+  x.overrideMimeType('application/json; charset=utf-8');
+  x.timeout = 2000;
+  x.onload = function () {
+    if (x.status !== 200 && x.status !== 0) return;
+    try {
+      var t = x.responseText;
+      if (t.charCodeAt(0) === 0xFEFF) t = t.slice(1);
+      var d = JSON.parse(t);
+      if (d.status === 'playing' && d.title && d.artist) {
+        var sp = d.pos || 0, sd = d.dur || 0;
+        S.npTitle = d.title;
+        S.npStart = Date.now() - sp * 1000;
+        S.npDur = sd || 0;
+        S._lastNpState = 'playing';
+        document.getElementById('nptitle').textContent = d.title;
+        document.getElementById('npartist').textContent = d.artist;
+        document.getElementById('npalbum').textContent = d.album ? '[' + d.album + ']' : '';
 
-        // smtc album art fallback
-        var art=document.getElementById('art');
-        var artph=document.getElementById('artph');
-        if(S._smtcHasArt&&S._smtcArtVer!==S._artVer&&sp>=1){
-          S._artVer=S._smtcArtVer; S._artShowingPlaceholder=false;
-          art.src='data/album_art.jpg?v='+S._smtcArtVer;
-          (function poll(){
-            if(art.complete){
-              if(art.naturalWidth>0){
-                art.style.display='block'; artph.style.display='none';
-                S._artShowingPlaceholder=false;
-              }else{
-                art.style.display='none'; artph.style.display='';
-                S._artShowingPlaceholder=true; S._artVer=-1;
-              }
-            }else{setTimeout(poll,100)}
-          })();
+        // smtc art fallback — only if no native art
+        if (!M.hasNativeArt && d.has_art && sp >= 1) {
+          S._artRetries = 3;
+          var art = document.getElementById('art');
+          var ts = encodeURIComponent(d.title || Date.now());
+          art.onload = function () {
+            this.style.display = 'block';
+            document.getElementById('artph').style.display = 'none';
+            S._artLoaded = true;
+          };
+          art.onerror = function () {
+            if (this.src.indexOf('album_art.png') !== -1) {
+              this.src = 'data/album_art.jpg?cb=' + ts;
+            }
+          };
+          art.src = 'data/album_art.png?cb=' + ts;
         }
-        if(!S._smtcHasArt&&!S._artShowingPlaceholder){
-          S._artShowingPlaceholder=true; S._artVer=-1;
-          art.style.display='none'; artph.style.display='';
-        }
-      }else{
-        S.npTitle=null; S._artVer=-1; S._artShowingPlaceholder=true;
-        document.getElementById('art').style.display='none';
-        document.getElementById('artph').style.display='';
-        if(S._lastSmtcState!=='none'){S._lastSmtcState='none';
-          document.getElementById('npprog').innerHTML='<span class="time">--:--</span> no media';
-          document.getElementById('nptitle').textContent='';
-          document.getElementById('npartist').textContent='';
-          document.getElementById('npalbum').textContent='';
+      } else {
+        S.npTitle = null;
+        if (!M.hasNativeArt) {
+          document.getElementById('art').style.display = 'none';
+          document.getElementById('artph').style.display = '';
         }
       }
-    }catch(e){}
+    } catch (e) {}
   };
   x.send();
-  setTimeout(loadSmtc,1000);
+  setTimeout(loadSmtc, 2000);
 })();
 
 // ── Update time footer (every 1s) ────────────────────────
 setInterval(function(){
-  var n=new Date();
-  var ts=n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0')+' '+String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+':'+String(n.getSeconds()).padStart(2,'0');
-  var eqState=_weHasAudio?'WE-AUDIO frames='+_eqDebug.frames+' len='+_eqDebug.lastLength:('EQ-FALLBACK ')+(_eqDebug.registered?'registered':'not-registered');
-  document.getElementById('u').innerHTML='<span style="color:#666">['+ts+'] ['+eqState+']</span>';
-},1000);
+  var n = new Date();
+  var ts = n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(n.getDate()).padStart(2, '0') + ' ' + String(n.getHours()).padStart(2, '0') + ':' + String(n.getMinutes()).padStart(2, '0') + ':' + String(n.getSeconds()).padStart(2, '0');
+
+  var artState;
+  if (M.hasNativeArt) artState = 'ART:NATIVE';
+  else if (S._artLoaded) artState = 'ART:FALLBACK';
+  else artState = 'ART:NONE';
+
+  var mediaState = M.hasNativeMedia ? 'MEDIA:NATIVE' : 'MEDIA:JSON';
+
+  var eqState = _weHasAudio ? 'WE-AUDIO frames=' + _eqDebug.frames + ' len=' + _eqDebug.lastLength : ('EQ-FALLBACK ') + (_eqDebug.registered ? 'registered' : 'not-registered');
+
+  document.getElementById('u').innerHTML = '<span style="color:#666">[' + ts + '] [' + artState + '] [' + mediaState + '] [' + eqState + ']</span>';
+}, 1000);
 })();</script>
 </body></html>
