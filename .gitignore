@@ -15,7 +15,9 @@ data/eq_data.json
 data/album_art.jpg
 data/album_art.png
 data/*.tmp
+data/*.log
 *.pid
+*.log
 *.tmp
 __pycache__/
 
