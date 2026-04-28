@@ -39,11 +39,13 @@ body{display:flex;align-items:center;justify-content:center}
 .eq-block{display:flex;gap:10px;line-height:1.5;margin-top:10px;padding-top:10px;border-top:1px solid var(--muted)}
 .eq-labels{flex-shrink:0;display:flex;flex-direction:column;gap:2px}
 .eq-lb{color:var(--red)}.eq-lm{color:var(--yellow)}.eq-lt{color:var(--green)}
-.eq-bars{display:flex;flex-direction:column;gap:2px;width:480px;min-width:480px;max-width:480px;flex:none}
-.eq-row{display:flex;align-items:center;white-space:nowrap;width:480px;overflow:hidden}
-.eq-b{color:var(--red)}.eq-m{color:var(--yellow)}.eq-t{color:var(--green)}.eq-s{color:var(--bar-bg)}
-.eq-p{color:var(--muted);margin-left:10px;font-size:clamp(12px,0.95vw,16px);width:50px;min-width:50px;
-  display:inline-block;text-align:right;font-variant-numeric:tabular-nums}
+.eq-bars{display:flex;flex-direction:column;gap:2px;width:530px;min-width:530px;max-width:530px;flex:none}
+.eq-row{display:flex;align-items:center;white-space:nowrap;width:520px;overflow:hidden}
+.eq-name{display:inline-block;width:72px;color:var(--yellow);font-variant-numeric:tabular-nums}
+.bar-bracket{color:var(--muted)}
+.bar-empty{color:var(--bar-bg)}
+.bar-pct{display:inline-block;width:50px;text-align:right;color:var(--muted);margin-left:6px;font-variant-numeric:tabular-nums}
+.fixed-time{display:inline-block;width:58px;text-align:center;font-variant-numeric:tabular-nums}
 #u{color:var(--muted);font-size:clamp(11px,0.85vw,15px);text-align:right;margin-top:10px;padding-top:6px;
   border-top:1px solid var(--muted);white-space:nowrap;overflow:hidden;text-overflow:clip;width:100%;font-variant-numeric:tabular-nums}
 </style></head><body>
@@ -126,13 +128,20 @@ var mediaState = {
 })();
 
 // ── Helpers ──────────────────────────────────────────────
-function pg(p,w){w=w||30;var f=Math.round(p/100*w);if(f<0)f=0;if(f>w)f=w;
-  var c=p>=80?getComputedStyle(document.documentElement).getPropertyValue('--red').trim():
-          p>=50?getComputedStyle(document.documentElement).getPropertyValue('--yellow').trim():
-                getComputedStyle(document.documentElement).getPropertyValue('--green').trim();
-  var e=w-f;
-  return'<span style="color:'+c+'">'+'█'.repeat(f)+'</span><span style="color:var(--bar-bg)">'+'█'.repeat(e)+'</span>';
+function termBar(p,w,opts){w=w||24;opts=opts||{};
+  var pct=Math.max(0,Math.min(100,Number(p)||0));
+  var filled=Math.round(pct/100*w);if(filled<0)filled=0;if(filled>w)filled=w;
+  var color=opts.color||'var(--green)';
+  if(opts.threshold){if(pct>=85)color='var(--red)';else if(pct>=60)color='var(--yellow)';else color='var(--green)';}
+  var s='<span class="bar-bracket">[</span>';
+  s+='<span style="color:'+color+'">'+'|'.repeat(filled)+'</span>';
+  s+='<span class="bar-empty">'+'-'.repeat(w-filled)+'</span>';
+  s+='<span class="bar-bracket">]</span>';
+  if(opts.percent!==false){s+='<span class="bar-pct">'+Math.round(pct).toString().padStart(3,' ')+'%</span>';}
+  return s;
 }
+function pg(p,w){return termBar(p,w||24,{threshold:true});}
+function mediaBar(p,w){return termBar(p,w||32,{color:'var(--cyan)',percent:false});}
 function e(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 function fm(g){return g>=1000?(g/1024).toFixed(1)+' TB':g.toFixed(1)+' GiB'}
 function ft(s){s=isNaN(s)?0:Math.max(0,Math.round(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
@@ -320,15 +329,11 @@ setInterval(function () {
 
 // ── EQ animation (every 100ms) ───────────────────────────
 (function eqAnm(){
-  var w=32;
   var sm=S.sm,b=S.eqB||0,m=S.eqM||0,t=S.eqT||0;
   sm.b+=(b-sm.b)*0.65;sm.m+=(m-sm.m)*0.65;sm.t+=(t-sm.t)*0.65;
-  var bf=Math.max(0,Math.min(w,Math.round(sm.b/100*w)));
-  var mf=Math.max(0,Math.min(w,Math.round(sm.m/100*w)));
-  var tf=Math.max(0,Math.min(w,Math.round(sm.t/100*w)));
-  document.getElementById('eqb').innerHTML='<span class="eq-b">'+'█'.repeat(bf)+'</span><span class="eq-s">'+'█'.repeat(w-bf)+'</span><span class="eq-p">'+Math.round(sm.b)+'%</span>';
-  document.getElementById('eqm').innerHTML='<span class="eq-m">'+'█'.repeat(mf)+'</span><span class="eq-s">'+'█'.repeat(w-mf)+'</span><span class="eq-p">'+Math.round(sm.m)+'%</span>';
-  document.getElementById('eqt').innerHTML='<span class="eq-t">'+'█'.repeat(tf)+'</span><span class="eq-s">'+'█'.repeat(w-tf)+'</span><span class="eq-p">'+Math.round(sm.t)+'%</span>';
+  document.getElementById('eqb').innerHTML='<span class="eq-name">Bass:</span> '+termBar(sm.b,28,{color:'var(--red)'});
+  document.getElementById('eqm').innerHTML='<span class="eq-name">Mid:</span>  '+termBar(sm.m,28,{color:'var(--yellow)'});
+  document.getElementById('eqt').innerHTML='<span class="eq-name">Treb:</span> '+termBar(sm.t,28,{color:'var(--green)'});
   setTimeout(eqAnm,80);
 })();
 
@@ -347,17 +352,17 @@ setInterval(function () {
         var host=s.hostname||'?';
         document.getElementById('uprompt').textContent='C:\\Users\\'+uname+'>';
         lines.push('<div class="info-title">'+e(uname)+'@'+e(host)+'</div>');
-        lines.push('<div class="info-sep">'+'─'.repeat(36)+'</div>');
+        lines.push('<div class="info-sep">'+'-'.repeat(36)+'</div>');
       }
       if(o)lines.push('<span class="k">OS:      </span><span class="v">'+e(o.name||'?')+'</span> <span class="m">'+e(o.version||'')+' ('+e(o.architecture||'')+')</span>');
       if(s)lines.push('<span class="k">Host:    </span><span class="v">'+e(s.hostname||'?')+'</span>');
       if(mb)lines.push('<span class="k">Board:   </span><span class="m">'+e(mb)+'</span>');
       if(o)lines.push('<span class="k">Kernel:  </span><span class="m">Windows NT '+e(o.version||'')+'</span>');
-      lines.push('<div class="sep">'+'─'.repeat(36)+'</div>');
+      lines.push('<div class="sep">'+'-'.repeat(36)+'</div>');
       if(c)lines.push('<span class="k">CPU:     </span><span class="v">'+e(c.name||'?')+'</span> <span class="m">('+(c.cores||0)+'C/'+(c.threads||0)+'T @ '+(c.frequency_mhz||0)+'MHz)</span>');
       if(g){var gn='';if(typeof g==='string')gn=g;else if(Array.isArray(g)){gn=g.filter(function(x){return x.indexOf('OrayIdd')<0})[0]||g[0]||''} if(gn)lines.push('<span class="k">GPU:     </span><span class="v">'+e(gn)+'</span>')}
       if(m)lines.push('<span class="k">Memory:  </span><span class="v">'+fm(m.used_gb||0)+'</span><span class="m"> / '+fm(m.total_gb||0)+' ('+(m.percent||0).toFixed(0)+'%)</span> '+pg(m.percent||0,22));
-      lines.push('<div class="sep">'+'─'.repeat(36)+'</div>');
+      lines.push('<div class="sep">'+'-'.repeat(36)+'</div>');
       if(dk)Object.keys(dk).forEach(function(l){var dd=dk[l];lines.push('<span class="k">Disk '+e(l.replace(':',''))+': </span><span class="m"> '+fm(dd.used_gb||0)+' / '+fm(dd.total_gb||0)+' ('+(dd.percent||0).toFixed(0)+'%)</span> '+pg(dd.percent||0,22))});
       if(nw&&nw.ipv4)lines.push('<span class="k">Network: </span><span class="v">'+e(nw.ipv4)+'</span>');
 
@@ -387,7 +392,7 @@ setInterval(function(){
     }
     dur = mediaState.duration;
     var pct = dur > 0 ? Math.min(99.9, pos / dur * 100) : 0;
-    var prog = '<span class="time" id="postime">' + ft(pos) + '</span> ' + pg(pct, 30) + ' <span class="time">/ ' + ft(dur) + '</span>';
+    var prog = '<span class="time fixed-time" id="postime">' + ft(pos) + '</span> ' + mediaBar(pct, 32) + ' <span class="time fixed-time">/ ' + ft(dur) + '</span>';
     if (S._lastNpProg !== prog) { S._lastNpProg = prog; document.getElementById('npprog').innerHTML = prog; }
     S.npTitle = mediaState.title;
     S.npStart = Date.now() - pos * 1000;
