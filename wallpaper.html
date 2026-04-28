@@ -197,6 +197,22 @@ var EQ = {
   lastAvg: 0
 };
 
+var EqNorm = { peakB: 0.003, peakM: 0.003, peakT: 0.003 };
+
+function normalizeBand(value, peakKey) {
+  var minPeak = 0.003;
+  var attack = 0.35;
+  var release = 0.995;
+  value = Math.max(0, Number(value) || 0);
+  if (value > EqNorm[peakKey]) {
+    EqNorm[peakKey] = EqNorm[peakKey] * (1 - attack) + value * attack;
+  } else {
+    EqNorm[peakKey] = Math.max(minPeak, EqNorm[peakKey] * release);
+  }
+  var normalized = value / Math.max(minPeak, EqNorm[peakKey]);
+  return Math.max(0, Math.min(1, normalized));
+}
+
 function wallpaperAudioListener(audioArray) {
   try {
     if (!audioArray || audioArray.length < 128) {
@@ -206,7 +222,6 @@ function wallpaperAudioListener(audioArray) {
 
     var bass = 0, mid = 0, treble = 0;
     var bc = 0, mc = 0, tc = 0;
-    var bassPeak = 0, midPeak = 0, treblePeak = 0;
     var sumAll = 0, maxAll = 0;
 
     // Full-array diagnostics first.
@@ -227,48 +242,31 @@ function wallpaperAudioListener(audioArray) {
       var right = Math.min(Number(audioArray[i + 64]) || 0, 1);
       var v = (left + right) / 2;
 
-      if (i < 8) {
-        bass += v; bc++;
-        if (v > bassPeak) bassPeak = v;
-      } else if (i < 32) {
-        mid += v; mc++;
-        if (v > midPeak) midPeak = v;
-      } else {
-        treble += v; tc++;
-        if (v > treblePeak) treblePeak = v;
-      }
+      if (i < 8)       { bass += v; bc++; }
+      else if (i < 32) { mid  += v; mc++; }
+      else             { treble += v; tc++; }
     }
 
     var avgB = bass / Math.max(1, bc);
     var avgM = mid / Math.max(1, mc);
     var avgT = treble / Math.max(1, tc);
 
-    // Use avg + peak and nonlinear compression. WE Web audio values are often tiny
-    // (max around 0.02-0.08), so linear gain still looks static in a terminal bar.
-    function bandToPercent(avg, peak, gain, floor) {
-      var energy = avg * 0.65 + peak * 0.35;
-      var amplified = Math.min(1, energy * gain);
-      var pct = Math.pow(amplified, 0.62) * 100;
-      if (sumAll > 0.02) pct = Math.max(pct, floor);
-      if (pct < 0.5) pct = 0;
-      return Math.max(0, Math.min(100, pct));
-    }
-
-    var nextB = bandToPercent(avgB, bassPeak, 38, 8);
-    var nextM = bandToPercent(avgM, midPeak, 52, 6);
-    var nextT = bandToPercent(avgT, treblePeak, 78, 4);
-
-    // Silence / pause decay. If audio frames still arrive with near-zero values,
-    // decay gently instead of freezing the last visible bars.
-    if (sumAll <= 0.001 || maxAll <= 0.0005) {
+    // Adaptive normalization: compensate for volume / track loudness
+    var totalEnergy = avgB + avgM + avgT;
+    if (totalEnergy < 0.0005) {
       S.eqB *= 0.84; if (S.eqB < 0.5) S.eqB = 0;
       S.eqM *= 0.84; if (S.eqM < 0.5) S.eqM = 0;
       S.eqT *= 0.84; if (S.eqT < 0.5) S.eqT = 0;
     } else {
-      // Fast enough to be visible, but still smoothed for wallpaper use.
-      S.eqB = (S.eqB || 0) * 0.45 + nextB * 0.55;
-      S.eqM = (S.eqM || 0) * 0.42 + nextM * 0.58;
-      S.eqT = (S.eqT || 0) * 0.38 + nextT * 0.62;
+      var nB = normalizeBand(avgB, 'peakB');
+      var nM = normalizeBand(avgM, 'peakM');
+      var nT = normalizeBand(avgT, 'peakT');
+      var nextB = Math.pow(nB, 0.65) * 100;
+      var nextM = Math.pow(nM, 0.65) * 100;
+      var nextT = Math.pow(nT, 0.65) * 100;
+      S.eqB = (S.eqB || 0) * 0.65 + nextB * 0.35;
+      S.eqM = (S.eqM || 0) * 0.60 + nextM * 0.40;
+      S.eqT = (S.eqT || 0) * 0.55 + nextT * 0.45;
     }
 
     EQ.hasWallpaperAudio = true;
@@ -503,7 +501,7 @@ setInterval(function(){
     eqState = 'EQ:REGISTERED-NO-FRAMES';
   } else if (EQ.hasWallpaperAudio && Date.now() - EQ.lastFrameAt < 3000) {
     var nz = EQ.lastNonZeroAt ? ((Date.now()-EQ.lastNonZeroAt)/1000).toFixed(1)+'s' : '?';
-    eqState = 'EQ:WE-AUDIO frames=' + EQ.frames + ' len=' + EQ.lastLen + ' max=' + EQ.lastMax.toFixed(3) + ' sum=' + EQ.lastSum.toFixed(3) + ' b/m/t=' + Math.round(S.eqB||0) + '/' + Math.round(S.eqM||0) + '/' + Math.round(S.eqT||0) + ' nz=' + nz;
+    eqState = 'EQ:WE-AUDIO frames=' + EQ.frames + ' len=' + EQ.lastLen + ' max=' + EQ.lastMax.toFixed(3) + ' sum=' + EQ.lastSum.toFixed(3) + ' b/m/t=' + Math.round(S.eqB||0) + '/' + Math.round(S.eqM||0) + '/' + Math.round(S.eqT||0) + ' pB=' + EqNorm.peakB.toFixed(4) + ' pM=' + EqNorm.peakM.toFixed(4) + ' pT=' + EqNorm.peakT.toFixed(4) + ' nz=' + nz;
   } else if (EQ.source === 'JSON-FALLBACK') {
     eqState = 'EQ:JSON-FALLBACK';
   } else {
