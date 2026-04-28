@@ -4,8 +4,17 @@ Set objFSO = CreateObject("Scripting.FileSystemObject")
 strDir = objFSO.GetParentFolderName(WScript.ScriptFullName)
 strAgent = strDir & "\publish\cmdwallpaper_agent.exe"
 
-' Agent exe not found — nothing to do
+' Agent exe not found — log error and quit
 If Not objFSO.FileExists(strAgent) Then
+    On Error Resume Next
+    Dim errFile, errLog
+    errLog = strDir & "\data\start_service_error.log"
+    Set errFile = objFSO.CreateTextFile(errLog, True)
+    If Err.Number = 0 Then
+        errFile.WriteLine Now() & " | agent not found: " & strAgent
+        errFile.Close
+    End If
+    On Error Goto 0
     WScript.Quit 1
 End If
 
