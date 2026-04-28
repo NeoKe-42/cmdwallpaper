@@ -92,11 +92,32 @@ if (Test-Path $srcGitkeep) {
     Copy-PkgFile $srcGitkeep (Join-Path $dstDataDir ".gitkeep")
 }
 
-# ── Copy publish/cmdwallpaper_agent.exe ─────────────────
-Write-Host "Copying publish/cmdwallpaper_agent.exe..." -ForegroundColor Yellow
+# ── Copy entire publish/ directory (exe + runtime deps) ──
+Write-Host "Copying publish/..." -ForegroundColor Yellow
+$srcPublish = Join-Path $ProjectRoot "publish"
 $dstPublish = Join-Path $PackageDir "publish"
-New-Item -ItemType Directory -Path $dstPublish -Force | Out-Null
-Copy-PkgFile $AgentSrc (Join-Path $dstPublish "cmdwallpaper_agent.exe")
+Copy-Item $srcPublish $dstPublish -Recurse -Force
+# Remove debug symbols to save space
+Get-ChildItem $dstPublish -Recurse -Filter "*.pdb" -ErrorAction SilentlyContinue | Remove-Item -Force
+Get-ChildItem $dstPublish -Recurse -Filter "*.xml" -ErrorAction SilentlyContinue | Remove-Item -Force
+Get-ChildItem $dstPublish -Recurse -File | ForEach-Object {
+    Write-Host "  + $(Resolve-Path $_.FullName -Relative)" -ForegroundColor Gray
+}
+
+# ── Post-check: verify agent exe in package ──────────────
+$pkgAgent = Join-Path $dstPublish "cmdwallpaper_agent.exe"
+if (-not (Test-Path $pkgAgent)) {
+    Write-Host "" -ForegroundColor Red
+    Write-Host "ERROR: Agent exe missing from package!" -ForegroundColor Red
+    Write-Host "  $pkgAgent" -ForegroundColor Red
+    exit 1
+}
+Write-Host ""
+Write-Host "Agent included:" -ForegroundColor Green
+Write-Host "  $pkgAgent" -ForegroundColor Gray
+
+$publishFileCount = (Get-ChildItem $dstPublish -Recurse -File | Measure-Object).Count
+Write-Host "  + $publishFileCount publish files" -ForegroundColor Gray
 
 # ── Generate helper .bat files in package root ───────────
 Write-Host "Generating helper .bat files..." -ForegroundColor Yellow
@@ -222,7 +243,8 @@ Included:
 - cmdwallpaper_agent.csproj
 - assets/
 - data/.gitkeep
-- publish/cmdwallpaper_agent.exe
+- publish/ (entire directory, agent exe + runtime dependencies)
+- .bat helper files (generated during packaging)
 
 Excluded:
 - data/*.json
