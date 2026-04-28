@@ -14,34 +14,34 @@
                 "cores":  8
             },
     "now_playing":  {
-                        "album_title":  "新生 - 英雄联盟十周年神凰行者皮肤主题曲",
-                        "duration_seconds":  189.1,
-                        "position_seconds":  13.1,
-                        "title":  "Rebirth",
-                        "artist":  "英雄联盟",
+                        "album_title":  "Closer",
+                        "duration_seconds":  245,
+                        "position_seconds":  214.9,
+                        "title":  "Closer",
+                        "artist":  "The Chainsmokers/Halsey",
                         "status":  "playing"
                     },
     "disk":  {
                  "F:":  {
-                            "used_gb":  128.48,
+                            "used_gb":  128.44,
                             "total_gb":  150.25,
                             "percent":  85.5,
                             "mount":  "F:\\",
-                            "free_gb":  21.77
+                            "free_gb":  21.81
                         },
                  "C:":  {
-                            "used_gb":  400.41999999999996,
+                            "used_gb":  400.46,
                             "total_gb":  474.71,
                             "percent":  84.4,
                             "mount":  "C:\\",
-                            "free_gb":  74.29
+                            "free_gb":  74.25
                         },
                  "D:":  {
-                            "used_gb":  651.67,
+                            "used_gb":  651.68000000000006,
                             "total_gb":  781.25,
                             "percent":  83.4,
                             "mount":  "D:\\",
-                            "free_gb":  129.58
+                            "free_gb":  129.57
                         }
              },
     "os":  {
@@ -51,12 +51,12 @@
                "build":  "26120"
            },
     "memory":  {
-                   "used_gb":  9.5600000000000023,
+                   "used_gb":  8.8500000000000014,
                    "total_gb":  31.19,
-                   "percent":  30.7,
-                   "available_gb":  21.63
+                   "percent":  28.4,
+                   "available_gb":  22.34
                },
-    "timestamp":  "2026-04-28T01:35:11.5589757Z",
+    "timestamp":  "2026-04-28T02:55:01.9327177Z",
     "system":  {
                    "username":  "m1586",
                    "hostname":  "WANGKE"

@@ -1,20 +1,48 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><style>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><style>
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;height:100%;background:transparent;font-family:"Consolas","Courier New","SimHei",monospace;font-size:18px;overflow:hidden;display:flex;align-items:center;justify-content:center}
-.t{background:rgba(12,12,16,0.92);border:1px solid #333;border-radius:8px;padding:36px 48px;min-width:960px;max-width:1150px;box-shadow:0 4px 30px rgba(0,0,0,0.6);position:relative}
-.tb{color:#666;font-size:15px;margin-bottom:18px;letter-spacing:1px;display:flex;gap:14px;white-space:nowrap}
-.tb .g{color:#0f0}.r{color:#ff5555!important}.y{color:#f1fa8c!important}.b{color:#50fa7b!important}
-.row{display:flex;line-height:2.0}.l{color:#00ff88;min-width:70px;flex-shrink:0}.c{color:#888;margin-right:10px}.v{color:#ddd}.d{color:#888;font-size:16px}.s{color:#444}
-.np{color:#555;font-size:14px;font-style:italic}.np2{display:none}.na{color:#00ccff;font-size:15px}.nt{color:#ddd;font-size:16px}.nal{color:#777;font-size:13px}.nx{color:#888;font-size:14px}
-#u{color:#555;font-size:13px;margin-top:14px;text-align:right}
+html,body{width:100%;height:100%;background:transparent;overflow:hidden;font-family:"Segoe UI","Microsoft YaHei","微软雅黑","Consolas","PingFang SC","Noto Sans SC","SimHei",monospace,sans-serif;font-size:15px}
+body{display:flex;align-items:center;justify-content:center;color:#ccc}
+.t{background:rgba(12,12,16,0.94);border:1px solid #2a2a2a;border-radius:10px;padding:24px 32px 20px 32px;min-width:980px;max-width:1200px;box-shadow:0 4px 40px rgba(0,0,0,0.7),inset 0 1px 0 rgba(255,255,255,0.03)}
+/* Title bar */
+.tb{color:#555;font-size:13px;margin-bottom:14px;display:flex;align-items:center;gap:10px;white-space:nowrap;padding-bottom:8px;border-bottom:1px solid #1e1e1e}
+.tb .dot-r{color:#ff5f56}.tb .dot-y{color:#ffbd2e}.tb .dot-g{color:#27c93f}
+.tb .userhost{color:#00ff88}.tb .sep{color:#3a3a3a}
+/* Side-by-side body */
+.body{display:flex;gap:28px}
+/* Left column */
+.left{flex-shrink:0;width:180px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.art-box{width:180px;height:180px;border:1px solid #2a2a2a;border-radius:6px;overflow:hidden;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center}
+.art-box img{width:100%;height:100%;object-fit:cover;display:none}
+.art-placeholder{color:#333;font-size:12px;text-align:center;line-height:1.6}
+.art-label{color:#555;font-size:11px;text-transform:uppercase;letter-spacing:1px}
+/* Right panel */
+.right{flex:1;min-width:0;color:#ccc;line-height:1.8}
+.right .k{color:#00ff88}.right .v{color:#ddd}.right .m{color:#888;font-size:13px}
+.right .sep-line{color:#333;font-size:13px;margin:2px 0}
+.right .np-none{color:#555;font-size:14px;font-style:italic}
+.right .title{color:#fff;font-size:15px}
+.right .artist{color:#00ccff;font-size:14px}
+.right .album{color:#777;font-size:13px}
+.right .time{color:#888;font-size:13px}
+/* EQ bar colors */
+.eq-b{color:#ff5555}.eq-m{color:#f1fa8c}.eq-t{color:#50fa7b}.eq-s{color:#222}
+/* Footer */
+#u{color:#444;font-size:11px;text-align:right;margin-top:8px;border-top:1px solid #1e1e1e;padding-top:6px}
 </style></head><body>
 <div class="t">
-<div class="tb"><span class="r">●</span><span class="y">●</span><span class="b">●</span> <span class="g" id="tu">m1586@wangke</span>:~/ <span id="td">00:00:00</span><span class="s">|</span><span id="tb"></span><span id="tp">0%</span><span class="s">|</span><span id="dt">----</span></div>
-<div class="row"><div class="l">sys</div><div class="c">~</div><div class="v" id="info"></div></div>
-<div class="row"><div class="l">np</div><div class="c">~</div><div class="v" id="np"></div></div>
-<div class="row"><div class="l">eq</div><div class="c">~</div><div class="v" id="eq"></div></div>
+<div class="tb">
+<span class="dot-r">●</span><span class="dot-y">●</span><span class="dot-g">●</span>
+<span class="userhost" id="tu">m1586@wangke</span>:~/
+<span id="td">00:00:00</span><span class="sep">|</span><span id="tb"></span><span id="tp">0%</span><span class="sep">|</span><span id="dt">----</span>
+</div>
+<div class="body">
+<div class="left">
+<div class="art-box"><img id="art" style="display:none"><div class="art-placeholder" id="artph"><span style="font-size:32px;color:#444">♪</span><br>no album<br>art</div></div>
+<div class="art-label" id="artlabel"></div>
+</div>
+<div class="right" id="right"></div>
+</div>
 <div id="u"></div>
-<img id="art" style="display:none;position:absolute;left:48px;bottom:36px;width:130px;height:130px;border-radius:6px;object-fit:cover;border:1px solid #333;box-shadow:0 2px 12px rgba(0,0,0,0.5);z-index:1">
 </div>
 <script>
 (function(){
@@ -26,30 +54,30 @@ var R=500,S={npTitle:null,npStart:0,npDur:0,vol:50,sm:{b:0,m:0,t:0}};
   document.getElementById('td').textContent=String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
   document.getElementById('dt').textContent=n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0')+' '+['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][n.getDay()];
   var pct=(h*3600+m*60+s)/86400*100,w=20,f=Math.round(pct/100*w),c=pct>80?'#ff5555':pct>60?'#f1fa8c':'#50fa7b';
-  document.getElementById('tb').innerHTML='<span style="color:'+c+'">'+'█'.repeat(f)+'</span><span style="color:#444">'+'█'.repeat(w-f)+'</span>';
+  document.getElementById('tb').innerHTML='<span style="color:'+c+'">'+'█'.repeat(f)+'</span><span style="color:#333">'+'█'.repeat(w-f)+'</span>';
   document.getElementById('tp').textContent=pct.toFixed(1)+'%';
   setTimeout(tck,1000);
 })();
 
-// EQ bars - use Wallpaper Engine audio if available, otherwise flat
+// EQ bars animation
 (function anm(){
-  var be=document.getElementById('eq'),sm=S.sm;
+  var sm=S.sm;
   var b=S.eqB||0,m=S.eqM||0,t=S.eqT||0;
-  // When silent, bars drop to 0 (no fake sine waves)
   sm.b+=(b-sm.b)*0.4;sm.m+=(m-sm.m)*0.4;sm.t+=(t-sm.t)*0.4;
   var bf=Math.round(sm.b/5),mf=Math.round(sm.m/5),tf=Math.round(sm.t/5);
-  be.innerHTML='<span style="color:#ff5555">'+'█'.repeat(bf)+'</span><span style="color:#444">'+'█'.repeat(20-bf)+'</span> BASS '+
-    '<span style="color:#f1fa8c">'+'█'.repeat(mf)+'</span><span style="color:#444">'+'█'.repeat(20-mf)+'</span> MID '+
-    '<span style="color:#50fa7b">'+'█'.repeat(tf)+'</span><span style="color:#444">'+'█'.repeat(20-tf)+'</span> TREB';
+  var eqEl=document.getElementById('eqbars');
+  if(eqEl)eqEl.innerHTML=
+    '<span class="eq-b">'+'█'.repeat(bf)+'</span><span class="eq-s">'+'█'.repeat(20-bf)+'</span> BASS  '+
+    '<span class="eq-m">'+'█'.repeat(mf)+'</span><span class="eq-s">'+'█'.repeat(20-mf)+'</span> MID  '+
+    '<span class="eq-t">'+'█'.repeat(tf)+'</span><span class="eq-s">'+'█'.repeat(20-tf)+'</span> TREB';
   requestAnimationFrame(anm);
 })();
 
-// EQ: prefer Wallpaper Engine native listener, fall back to DLL meter
+// EQ sources
 var _weHasAudio=false,_weLastAudio=0;
 if(typeof window.wallpaperRegisterAudioListener==='function'){
   try{window.wallpaperRegisterAudioListener(function(L){if(!L||!L.length)return;var n=L.length,ba=0,ma=0,ta=0,bc=0,mc=0,tc=0;for(var i=0;i<n;i++){if(i<Math.floor(n*0.08)){ba+=L[i];bc++}else if(i<Math.floor(n*0.35)){ma+=L[i];mc++}else{ta+=L[i];tc++}}S.eqB=Math.min(100,(ba/bc)*100);S.eqM=Math.min(100,(ma/mc)*100);S.eqT=Math.min(100,(ta/tc)*100);_weHasAudio=true;_weLastAudio=Date.now()})}catch(e){}
 }
-// Fast poll eq_data.json from DLL audio meter (every 100ms) — fallback if WE listener has no data
 setInterval(function(){
   if(_weHasAudio&&Date.now()-_weLastAudio<3000)return;
   if(Date.now()-_weLastAudio>=3000)_weHasAudio=false;
@@ -61,7 +89,7 @@ setInterval(function(){
 // Helpers
 function e(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 function fm(g){return g>=1000?(g/1024).toFixed(1)+' TB':g.toFixed(1)+' GiB'}
-function br(p,w){w=w||25;var f=Math.round(p/100*w),c=p>80?'#ff5555':p>60?'#f1fa8c':'#50fa7b';return'<span style="color:'+c+'">'+'█'.repeat(f)+'</span><span style="color:#444">'+'█'.repeat(w-f)+'</span>'}
+function br(p,w){w=w||18;var f=Math.round(p/100*w),c=p>80?'#ff5555':p>60?'#f1fa8c':'#50fa7b';return'<span style="color:'+c+'">'+'█'.repeat(f)+'</span><span style="color:#333">'+'█'.repeat(w-f)+'</span>'}
 function ft(s){s=isNaN(s)?0:Math.max(0,Math.round(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
 
 function load(){
@@ -69,52 +97,72 @@ function load(){
   x.onload=function(){
     if(x.status!==200&&x.status!==0)return;
     try{var t=x.responseText;if(t.charCodeAt(0)===0xFEFF)t=t.slice(1);var d=JSON.parse(t);
-      // System info
-      var r=[],s=d.system,o=d.os,c=d.cpu,g=d.gpu,m=d.memory,dk=d.disk,nw=d.network,mb=d.motherboard;
-      if(s)r.push('user '+e(s.username||'?')+'  host '+e(s.hostname||'?'));
-      r.push('<span class="s">'+'─'.repeat(48)+'</span>');
-      if(o)r.push('os '+e(o.name||'?')+' <span class="d">'+e(o.version||'')+' ('+e(o.architecture||'')+')</span>');
-      if(c)r.push('cpu '+e(c.name||'?')+' <span class="d">'+(c.cores||0)+'C/'+(c.threads||0)+'T @ '+(c.frequency_mhz||0)+'MHz</span>');
-      if(g&&g.length){var gl=g.filter(function(x){return x.indexOf('OrayIdd')===-1});if(!gl.length)gl=g;r.push('gpu '+e(gl[0]))}
-      if(m)r.push('ram '+fm(m.used_gb||0)+' / '+fm(m.total_gb||0)+' ('+(m.percent||0).toFixed(0)+'%) '+br(m.percent||0,22));
-      r.push('<span class="s">'+'─'.repeat(48)+'</span>');
-      if(dk)Object.keys(dk).forEach(function(l){var dd=dk[l];r.push('disk '+e(l.replace(':',''))+' '+fm(dd.used_gb||0)+' / '+fm(dd.total_gb||0)+' ('+(dd.percent||0).toFixed(0)+'%) '+br(dd.percent||0,22))});
-      if(nw&&nw.ipv4)r.push('<span class="d">ip '+e(nw.ipv4)+' ('+e(nw.interface||'')+')</span>');
-      if(mb)r.push('<span class="d">mb '+e(mb)+'</span>');
-      // Only update info if content changed (prevents flicker)
-      var infoStr = r.join('<br>');
-      if(S._lastInfo!==infoStr){S._lastInfo=infoStr;document.getElementById('info').innerHTML=infoStr}
+      var s=d.system,o=d.os,c=d.cpu,g=d.gpu,m=d.memory,dk=d.disk,nw=d.network,mb=d.motherboard;
+      var lines=[];
 
-      // Audio EQ from JSON (only if WE listener is not active)
-      if(!_weHasAudio&&d.audio){S.eqB=d.audio.eq_bass||0;S.eqM=d.audio.eq_mid||0;S.eqT=d.audio.eq_treble||0;S.vol=d.audio.volume||50}
+      if(s)lines.push('<span class="k">user </span><span class="v">'+e(s.username||'?')+'</span><span class="m">@</span><span class="v">'+e(s.hostname||'?')+'</span>');
+      lines.push('<div class="sep-line">'+'─'.repeat(42)+'</div>');
+      if(o)lines.push('<span class="k">os  </span><span class="v">'+e(o.name||'?')+'</span> <span class="m">'+e(o.version||'')+' ('+e(o.architecture||'')+')</span>');
+      if(c)lines.push('<span class="k">cpu </span><span class="v">'+e(c.name||'?')+'</span> <span class="m">'+(c.cores||0)+'C/'+(c.threads||0)+'T @ '+(c.frequency_mhz||0)+'MHz</span>');
+      if(g&&g.length){var gl=g.filter(function(x){return x.indexOf('OrayIdd')===-1});if(!gl.length)gl=g;lines.push('<span class="k">gpu </span><span class="v">'+e(gl[0])+'</span>')}
+      if(m)lines.push('<span class="k">ram </span><span class="v">'+fm(m.used_gb||0)+'</span><span class="m"> / '+fm(m.total_gb||0)+' ('+(m.percent||0).toFixed(0)+'%)</span> <span class="v">'+br(m.percent||0,18)+'</span>');
+      lines.push('<div class="sep-line">'+'─'.repeat(42)+'</div>');
+      if(dk)Object.keys(dk).forEach(function(l){var dd=dk[l];lines.push('<span class="k">disk</span><span class="v"> '+e(l.replace(':',''))+'</span> <span class="m">'+fm(dd.used_gb||0)+' / '+fm(dd.total_gb||0)+' ('+(dd.percent||0).toFixed(0)+'%)</span> <span class="v">'+br(dd.percent||0,18)+'</span>')});
+      if(nw&&nw.ipv4)lines.push('<span class="k">net </span><span class="v">'+e(nw.ipv4)+'</span><span class="m"> ('+e(nw.interface||'')+')</span>');
+      if(mb)lines.push('<span class="k">mb  </span><span class="m">'+e(mb)+'</span>');
+      lines.push('<br>');
 
-      // Now playing - SMTC provides real position/duration from DLL background thread
-      var np=d.now_playing||{},npEl=document.getElementById('np');
+      // Now playing
+      var np=d.now_playing||{};
       if(np.status==='playing'&&np.title&&np.artist){
         var title=np.title||'',artist=np.artist||'',album=np.album_title||'';
-        if(title.length>120||artist.length>120||title.indexOf('http')>=0){S.npTitle=null;S._artRetries=0;npEl.innerHTML='<span class=\"np\">No media</span>';document.getElementById('art').style.display='none'}
-        else{
+        if(title.length>120||artist.length>120||title.indexOf('http')>=0){
+          S.npTitle=null;S._artRetries=0;S._artLoaded=false;
+          document.getElementById('art').style.display='none';document.getElementById('artph').style.display='';
+          lines.push('<span class="k">np  </span><span class="np-none">No media</span>');
+        }else{
           var sp=np.position_seconds, sd=np.duration_seconds;
-          if(S.npTitle!==title){S.npTitle=title;S._artRetries=6;document.getElementById('art').style.display='none'}
+          if(S.npTitle!==title){S.npTitle=title;S._artRetries=6;S._artLoaded=false;document.getElementById('art').style.display='none';document.getElementById('artph').style.display=''}
           if(sp>=1){S.npStart=Date.now()-sp*1000;S.npDur=sd||0}
-          // Album art: retry a few times (file may still be extracting)
+
+          var prog='';
+          if(sp>=1&&sd>0){
+            var f=Math.round(sp/sd*18);if(f>18)f=18;
+            prog='<span class="time">'+ft(sp)+'</span> <span style="color:#50fa7b">'+'█'.repeat(f)+'</span><span style="color:#222">'+'█'.repeat(18-f)+'</span><span class="time"> '+ft(sd)+'</span>';
+          }else if(sp>=1){prog='<span class="time">'+ft(sp)+'</span>'}
+          lines.push('<span class="k">np  </span>'+prog);
+
+          var npInfo='<span class="title">'+e(title)+'</span>  <span class="artist">'+e(artist)+'</span>';
+          if(album)npInfo+=' <span class="album">['+e(album)+']</span>';
+          lines.push('<span style="margin-left:55px">'+npInfo+'</span>');
+
+          // Album art
           var art=document.getElementById('art');
-          if(S._artRetries>0&&sp>=1&&art.style.display==='none'){
+          if(!S._artLoaded&&S._artRetries>0&&sp>=1){
             S._artRetries--;
             var ts=encodeURIComponent(title);
-            art.onload=function(){this.style.display='block';this.onerror=function(){}}
-            art.onerror=function(){if(this.src.indexOf('.png')!==-1)this.src='album_art.jpg?cb='+ts}
+            art.onload=function(){this.style.display='block';document.getElementById('artph').style.display='none';S._artLoaded=true};
+            art.onerror=function(){if(this.src.indexOf('.png')!==-1)this.src='album_art.jpg?cb='+ts};
             art.src='album_art.png?cb='+ts;
           }
-          var timeStr='';
-          if(sp>=1){timeStr='<span class=\"nx\">'+ft(sp)+'</span>'; if(sd>0){var f=Math.round(sp/sd*18);if(f>18)f=18;timeStr+=' <span style=\"color:#50fa7b\">'+'█'.repeat(f)+'</span><span style=\"color:#333\">'+'█'.repeat(18-f)+'</span> / '+ft(sd)}else{timeStr+=' '}}
-          var ns=timeStr+'<span class=\"nt\">'+e(title)+'</span> <span class=\"na\">'+e(artist)+'</span>'+(album?' <span class=\"nal\">['+e(album)+']</span>':'');
-          if(S._ln!==ns){S._ln=ns;npEl.innerHTML=ns}
         }
       }else{
-        S.npTitle=null;S._ln='';S._artRetries=0;npEl.innerHTML='<span class=\"np\">No media</span>';
+        S.npTitle=null;S._artRetries=0;S._artLoaded=false;
         document.getElementById('art').style.display='none';
+        document.getElementById('artph').style.display='';
+        lines.push('<span class="k">np  </span><span class="np-none">No media</span>');
       }
+      lines.push('<br>');
+
+      // EQ
+      lines.push('<span class="k">eq  </span><span id="eqbars"></span>');
+
+      // Render right panel
+      var html='<div>'+lines.join('</div><div>')+'</div>';
+      if(S._lastRight!==html){S._lastRight=html;document.getElementById('right').innerHTML=html}
+
+      // Audio EQ fallback
+      if(!_weHasAudio&&d.audio){S.eqB=d.audio.eq_bass||0;S.eqM=d.audio.eq_mid||0;S.eqT=d.audio.eq_treble||0;S.vol=d.audio.volume||50}
 
       // Update time
       var n=new Date();
@@ -124,7 +172,7 @@ function load(){
   x.send();
 }
 load();setInterval(load,R);
-// Tick position every 500ms independent of JSON poll
-setInterval(function(){if(!S.npTitle)return;var p=document.querySelector('#np .nx');if(p)p.textContent=ft((Date.now()-S.npStart)/1000)},500);
+// Position ticker
+setInterval(function(){if(!S.npTitle)return;var p=document.querySelector('#right .time');if(p)p.textContent=ft((Date.now()-S.npStart)/1000)},500);
 })();</script>
 </body></html>
