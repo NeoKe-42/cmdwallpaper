@@ -52,13 +52,22 @@ dotnet publish cmdwallpaper_agent.csproj -c Release -r win-x64 -o publish
 ## Troubleshooting
 
 **EQ shows REGISTERED-NO-FRAMES**:
-1. Open the wallpaper in Wallpaper Engine Editor.
-2. Click Edit → Open in Explorer to check the copied `project.json` in WE's `myprojects` folder.
-3. Make sure `supportsaudioprocessing` is `true` (both root-level and inside `general`).
-4. Save the wallpaper once in the editor and reload it.
-5. In Wallpaper Engine settings, check General → Media → Audio recording device.
-6. Make sure Wallpaper Engine is not muted in Windows Volume Mixer.
-7. If using a USB/Bluetooth headset, try 44100 Hz sample rate.
+1. Make sure `project.json` uses the tested Web audio structure:
+```json
+{
+  "type": "Web",
+  "supportsAudio": true,
+  "general": {
+    "properties": {},
+    "supportsaudioprocessing": true
+  }
+}
+```
+2. Do NOT use bare `general.supportsaudioprocessing` without `properties` — this can crash Wallpaper Engine.
+3. Open the wallpaper in Wallpaper Engine Editor → Save → close and re-apply.
+4. In Wallpaper Engine settings, check General → Media → Audio recording device.
+5. Make sure Wallpaper Engine is not muted in Windows Volume Mixer.
+6. If using a USB/Bluetooth headset, try 44100 Hz sample rate.
 
 **System info shows "System helper not installed"**: run `install.ps1` to enable the C# system info agent.
 
@@ -70,6 +79,6 @@ dotnet publish cmdwallpaper_agent.csproj -c Release -r win-x64 -o publish
 
 ## Audio Probe
 
-If EQ shows `REGISTERED-NO-FRAMES`, import `audio_probe/project.json` into Wallpaper Engine as a separate wallpaper.
+If EQ shows `REGISTERED-NO-FRAMES`, import `tools/audio_probe/project.json` into Wallpaper Engine as a separate wallpaper (debug tool, not part of the main wallpaper).
 - If audio_probe also shows `frames=0`, the issue is Wallpaper Engine audio capture / audio device, not cmdwallpaper.
 - If audio_probe receives frames, then the main wallpaper integration needs to be checked.

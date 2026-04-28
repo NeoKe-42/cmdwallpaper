@@ -55,6 +55,7 @@ body{display:flex;align-items:center;justify-content:center}
 </div>
 <script>
 (function(){
+var DEBUG_AUDIO = false;
 var S={
   npTitle:null,npStart:0,npDur:0,sm:{b:0,m:0,t:0},
   _artLoaded:false,_artRetries:0,_lastNpState:null
@@ -501,7 +502,11 @@ setInterval(function(){
     eqState = 'EQ:REGISTERED-NO-FRAMES';
   } else if (EQ.hasWallpaperAudio && Date.now() - EQ.lastFrameAt < 3000) {
     var nz = EQ.lastNonZeroAt ? ((Date.now()-EQ.lastNonZeroAt)/1000).toFixed(1)+'s' : '?';
-    eqState = 'EQ:WE-AUDIO frames=' + EQ.frames + ' len=' + EQ.lastLen + ' max=' + EQ.lastMax.toFixed(3) + ' sum=' + EQ.lastSum.toFixed(3) + ' b/m/t=' + Math.round(S.eqB||0) + '/' + Math.round(S.eqM||0) + '/' + Math.round(S.eqT||0) + ' pB=' + EqNorm.peakB.toFixed(4) + ' pM=' + EqNorm.peakM.toFixed(4) + ' pT=' + EqNorm.peakT.toFixed(4) + ' nz=' + nz;
+    if (DEBUG_AUDIO) {
+      eqState = 'EQ:WE-AUDIO frames=' + EQ.frames + ' len=' + EQ.lastLen + ' max=' + EQ.lastMax.toFixed(3) + ' sum=' + EQ.lastSum.toFixed(3) + ' b/m/t=' + Math.round(S.eqB||0) + '/' + Math.round(S.eqM||0) + '/' + Math.round(S.eqT||0) + ' pB=' + EqNorm.peakB.toFixed(4) + ' pM=' + EqNorm.peakM.toFixed(4) + ' pT=' + EqNorm.peakT.toFixed(4) + ' nz=' + nz;
+    } else {
+      eqState = 'EQ:WE-AUDIO frames=' + EQ.frames;
+    }
   } else if (EQ.source === 'JSON-FALLBACK') {
     eqState = 'EQ:JSON-FALLBACK';
   } else {
