@@ -22,9 +22,9 @@ body{display:flex;align-items:center;justify-content:center}
 .eq-block{display:flex;gap:10px;line-height:1.5;margin-top:6px}
 .eq-labels{flex-shrink:0;display:flex;flex-direction:column;gap:2px;font-size:19px}
 .eq-labels .l1{color:#ff5555}.eq-labels .l2{color:#f1fa8c}.eq-labels .l3{color:#50fa7b}
-.eq-bars{display:flex;flex-direction:column;gap:2px;flex:1;max-width:320px}
+.eq-bars{display:flex;flex-direction:column;gap:2px;flex:1;max-width:420px}
 .eq-row{display:flex;align-items:center;font-size:18px}
-.eq-b{color:#ff5555}.eq-m{color:#f1fa8c}.eq-t{color:#50fa7b}.eq-s{color:#222}
+.eq-b{color:#ff5555}.eq-m{color:#f1fa8c}.eq-t{color:#50fa7b}.eq-s{color:#222}.eq-p{color:#666;margin-left:10px;font-size:15px;min-width:42px;display:inline-block}
 #u{color:#555;font-size:15px;text-align:right;margin-top:10px;padding-top:6px;border-top:1px solid #444}
 </style></head><body>
 <div class="w">
@@ -203,19 +203,13 @@ function wallpaperAudioListener(audioArray) {
       EQ.lastError = 'invalid audioArray length';
       return;
     }
+
     var bass = 0, mid = 0, treble = 0;
     var bc = 0, mc = 0, tc = 0;
-    var sum = 0, sumAll = 0, maxAll = 0;
-    for (var i = 0; i < 64; i++) {
-      var left = Math.min(Number(audioArray[i]) || 0, 1);
-      var right = Math.min(Number(audioArray[i + 64]) || 0, 1);
-      var v = (left + right) / 2;
-      sum += v;
-      if (i < 8)       { bass += v; bc++; }
-      else if (i < 32) { mid  += v; mc++; }
-      else             { treble += v; tc++; }
-    }
-    // Full-array sum/max for diagnostics
+    var bassPeak = 0, midPeak = 0, treblePeak = 0;
+    var sumAll = 0, maxAll = 0;
+
+    // Full-array diagnostics first.
     for (var j = 0; j < audioArray.length; j++) {
       var raw = Math.min(Number(audioArray[j]) || 0, 1);
       sumAll += raw;
@@ -225,26 +219,56 @@ function wallpaperAudioListener(audioArray) {
     EQ.lastMax = maxAll;
     EQ.lastAvg = sumAll / audioArray.length;
 
-    var nextB = Math.min(100, (bass / Math.max(1, bc)) * 1400);
-    var nextM = Math.min(100, (mid  / Math.max(1, mc)) * 1800);
-    var nextT = Math.min(100, (treble / Math.max(1, tc)) * 2400);
+    // Wallpaper Engine audioArray:
+    // 0-63 = left channel, 64-127 = right channel.
+    // Merge L/R first, then split 0-63 into bands.
+    for (var i = 0; i < 64; i++) {
+      var left = Math.min(Number(audioArray[i]) || 0, 1);
+      var right = Math.min(Number(audioArray[i + 64]) || 0, 1);
+      var v = (left + right) / 2;
 
-    // Minimum visual floor when audio is present but quiet
-    if (sumAll > 0.02) {
-      nextB = Math.max(nextB, 4);
-      nextM = Math.max(nextM, 3);
-      nextT = Math.max(nextT, 2);
+      if (i < 8) {
+        bass += v; bc++;
+        if (v > bassPeak) bassPeak = v;
+      } else if (i < 32) {
+        mid += v; mc++;
+        if (v > midPeak) midPeak = v;
+      } else {
+        treble += v; tc++;
+        if (v > treblePeak) treblePeak = v;
+      }
     }
 
-    // Smooth or decay
-    if (sumAll <= 0.001) {
-      S.eqB *= 0.88; if (S.eqB < 0.5) S.eqB = 0;
-      S.eqM *= 0.88; if (S.eqM < 0.5) S.eqM = 0;
-      S.eqT *= 0.88; if (S.eqT < 0.5) S.eqT = 0;
+    var avgB = bass / Math.max(1, bc);
+    var avgM = mid / Math.max(1, mc);
+    var avgT = treble / Math.max(1, tc);
+
+    // Use avg + peak and nonlinear compression. WE Web audio values are often tiny
+    // (max around 0.02-0.08), so linear gain still looks static in a terminal bar.
+    function bandToPercent(avg, peak, gain, floor) {
+      var energy = avg * 0.65 + peak * 0.35;
+      var amplified = Math.min(1, energy * gain);
+      var pct = Math.pow(amplified, 0.62) * 100;
+      if (sumAll > 0.02) pct = Math.max(pct, floor);
+      if (pct < 0.5) pct = 0;
+      return Math.max(0, Math.min(100, pct));
+    }
+
+    var nextB = bandToPercent(avgB, bassPeak, 38, 8);
+    var nextM = bandToPercent(avgM, midPeak, 52, 6);
+    var nextT = bandToPercent(avgT, treblePeak, 78, 4);
+
+    // Silence / pause decay. If audio frames still arrive with near-zero values,
+    // decay gently instead of freezing the last visible bars.
+    if (sumAll <= 0.001 || maxAll <= 0.0005) {
+      S.eqB *= 0.84; if (S.eqB < 0.5) S.eqB = 0;
+      S.eqM *= 0.84; if (S.eqM < 0.5) S.eqM = 0;
+      S.eqT *= 0.84; if (S.eqT < 0.5) S.eqT = 0;
     } else {
-      S.eqB = S.eqB * 0.65 + nextB * 0.35;
-      S.eqM = S.eqM * 0.60 + nextM * 0.40;
-      S.eqT = S.eqT * 0.55 + nextT * 0.45;
+      // Fast enough to be visible, but still smoothed for wallpaper use.
+      S.eqB = (S.eqB || 0) * 0.45 + nextB * 0.55;
+      S.eqM = (S.eqM || 0) * 0.42 + nextM * 0.58;
+      S.eqT = (S.eqT || 0) * 0.38 + nextT * 0.62;
     }
 
     EQ.hasWallpaperAudio = true;
@@ -252,7 +276,7 @@ function wallpaperAudioListener(audioArray) {
     EQ.lastLen = audioArray.length;
     EQ.lastFrameAt = Date.now();
     EQ.source = 'WE-AUDIO';
-    if (sum > 0.001) EQ.lastNonZeroAt = Date.now();
+    if (sumAll > 0.001) EQ.lastNonZeroAt = Date.now();
   } catch (err) {
     EQ.lastError = String(err && err.message ? err.message : err);
   }
@@ -291,16 +315,16 @@ setInterval(function () {
 
 // ── EQ animation (every 100ms) ───────────────────────────
 (function eqAnm(){
-  var w=28;
+  var w=32;
   var sm=S.sm,b=S.eqB||0,m=S.eqM||0,t=S.eqT||0;
-  sm.b+=(b-sm.b)*0.4;sm.m+=(m-sm.m)*0.4;sm.t+=(t-sm.t)*0.4;
+  sm.b+=(b-sm.b)*0.65;sm.m+=(m-sm.m)*0.65;sm.t+=(t-sm.t)*0.65;
   var bf=Math.max(0,Math.min(w,Math.round(sm.b/100*w)));
   var mf=Math.max(0,Math.min(w,Math.round(sm.m/100*w)));
   var tf=Math.max(0,Math.min(w,Math.round(sm.t/100*w)));
-  document.getElementById('eqb').innerHTML='<span class="eq-b">'+'█'.repeat(bf)+'</span><span class="eq-s">'+'█'.repeat(w-bf)+'</span>';
-  document.getElementById('eqm').innerHTML='<span class="eq-m">'+'█'.repeat(mf)+'</span><span class="eq-s">'+'█'.repeat(w-mf)+'</span>';
-  document.getElementById('eqt').innerHTML='<span class="eq-t">'+'█'.repeat(tf)+'</span><span class="eq-s">'+'█'.repeat(w-tf)+'</span>';
-  setTimeout(eqAnm,100);
+  document.getElementById('eqb').innerHTML='<span class="eq-b">'+'█'.repeat(bf)+'</span><span class="eq-s">'+'█'.repeat(w-bf)+'</span><span class="eq-p">'+Math.round(sm.b)+'%</span>';
+  document.getElementById('eqm').innerHTML='<span class="eq-m">'+'█'.repeat(mf)+'</span><span class="eq-s">'+'█'.repeat(w-mf)+'</span><span class="eq-p">'+Math.round(sm.m)+'%</span>';
+  document.getElementById('eqt').innerHTML='<span class="eq-t">'+'█'.repeat(tf)+'</span><span class="eq-s">'+'█'.repeat(w-tf)+'</span><span class="eq-p">'+Math.round(sm.t)+'%</span>';
+  setTimeout(eqAnm,80);
 })();
 
 // ── System info (from data/system_info.json, every 5s) ───
@@ -479,7 +503,7 @@ setInterval(function(){
     eqState = 'EQ:REGISTERED-NO-FRAMES';
   } else if (EQ.hasWallpaperAudio && Date.now() - EQ.lastFrameAt < 3000) {
     var nz = EQ.lastNonZeroAt ? ((Date.now()-EQ.lastNonZeroAt)/1000).toFixed(1)+'s' : '?';
-    eqState = 'EQ:WE-AUDIO frames=' + EQ.frames + ' len=' + EQ.lastLen + ' max=' + EQ.lastMax.toFixed(3) + ' sum=' + EQ.lastSum.toFixed(3) + ' nz=' + nz;
+    eqState = 'EQ:WE-AUDIO frames=' + EQ.frames + ' len=' + EQ.lastLen + ' max=' + EQ.lastMax.toFixed(3) + ' sum=' + EQ.lastSum.toFixed(3) + ' b/m/t=' + Math.round(S.eqB||0) + '/' + Math.round(S.eqM||0) + '/' + Math.round(S.eqT||0) + ' nz=' + nz;
   } else if (EQ.source === 'JSON-FALLBACK') {
     eqState = 'EQ:JSON-FALLBACK';
   } else {
