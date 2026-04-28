@@ -184,12 +184,47 @@ class Program
     // ── Main ─────────────────────────────────────────────
     static void Main(string[] args)
     {
-        string dir = args.Length > 0 ? args[0] : ".";
-        dir = Path.GetFullPath(dir);
-        if (!TryLock(dir)) return;
+        // Resolve project root from args or exe location
+        string rawArg = args.Length > 0 ? args[0] : null;
+        string dir;
+        if (!string.IsNullOrEmpty(rawArg) && rawArg == ".")
+            dir = Directory.GetCurrentDirectory();
+        else if (!string.IsNullOrEmpty(rawArg) && Path.IsPathRooted(rawArg))
+            dir = rawArg;
+        else if (!string.IsNullOrEmpty(rawArg))
+            dir = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), rawArg));
+        else
+            // No args: assume exe is in <ProjectRoot>/publish/, go one level up
+            dir = Path.GetFullPath(Path.Combine(
+                Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location),
+                ".."));
 
+        dir = Path.GetFullPath(dir);
         string dataDir = Path.Combine(dir, "data");
         if (!Directory.Exists(dataDir)) Directory.CreateDirectory(dataDir);
+
+        // Startup log
+        string logFile = Path.Combine(dataDir, "cmdwallpaper_agent.log");
+        try
+        {
+            File.AppendAllText(logFile,
+                DateTime.UtcNow.ToString("o") + " | START" +
+                " | exe=" + System.Reflection.Assembly.GetEntryAssembly().Location +
+                " | cwd=" + Directory.GetCurrentDirectory() +
+                " | arg=" + (rawArg ?? "(none)") +
+                " | projectRoot=" + dir +
+                " | dataDir=" + dataDir +
+                Environment.NewLine);
+        }
+        catch { }
+
+        if (!TryLock(dir))
+        {
+            try { File.AppendAllText(logFile, DateTime.UtcNow.ToString("o") + " | EXIT: already locked" + Environment.NewLine); }
+            catch { }
+            return;
+        }
+
         string dataFile = Path.Combine(dataDir, "system_info.json");
         string smtcFile = Path.Combine(dataDir, "smtc_data.json");
 
@@ -256,6 +291,16 @@ class Program
         t.SetApartmentState(ApartmentState.STA); t.Start();
         if (!smtcReady.WaitOne(8000)) smtcMgr = null;
         smtcReady.Dispose();
+
+        try
+        {
+            File.AppendAllText(logFile,
+                DateTime.UtcNow.ToString("o") + " | SMTC init " +
+                (smtcMgr != null ? "OK" : "FAILED") +
+                " | entering main loop" +
+                Environment.NewLine);
+        }
+        catch { }
 
         // ── Main loop ────────────────────────────────────
         string lastDataJson = "", lastSmtcJson = "", lastArtTitle = "";

@@ -1,0 +1,4 @@
+2026-04-28T10:56:45.4001648Z | START | exe=F:\1123\cmdwallpaper\publish\cmdwallpaper_agent.dll | cwd=F:\1123\cmdwallpaper | arg=. | projectRoot=F:\1123\cmdwallpaper | dataDir=F:\1123\cmdwallpaper\data
+2026-04-28T10:56:45.7467510Z | SMTC init OK | entering main loop
+2026-04-28T10:59:29.5036864Z | START | exe=F:\1123\cmdwallpaper\publish\cmdwallpaper_agent.dll | cwd=F:\1123\cmdwallpaper | arg=. | projectRoot=F:\1123\cmdwallpaper | dataDir=F:\1123\cmdwallpaper\data
+2026-04-28T10:59:29.8017617Z | SMTC init OK | entering main loop

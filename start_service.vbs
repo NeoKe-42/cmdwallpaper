@@ -2,25 +2,36 @@ Set objShell = CreateObject("WScript.Shell")
 Set objFSO = CreateObject("Scripting.FileSystemObject")
 
 strDir = objFSO.GetParentFolderName(WScript.ScriptFullName)
+strAgent = strDir & "\publish\cmdwallpaper_agent.exe"
 
-' Check PID file: only start if this directory isn't already running
+' Agent exe not found — nothing to do
+If Not objFSO.FileExists(strAgent) Then
+    WScript.Quit 1
+End If
+
+' ── Simplified PID check: only skip if the SAME exe is already running ──
 strPidFile = strDir & "\cmdwallpaper.pid"
+bSkip = False
 If objFSO.FileExists(strPidFile) Then
-    ' PID file exists — agent may already be running for this dir
     On Error Resume Next
-    Dim pid, proc
-    pid = CLng(objFSO.OpenTextFile(strPidFile, 1).ReadAll())
-    Set proc = GetObject("winmgmts:root/cimv2:Win32_Process.Handle='" & pid & "'")
+    pid = CLng(Trim(objFSO.OpenTextFile(strPidFile, 1).ReadAll()))
     If Err.Number = 0 Then
-        ' Process exists — check it's from this directory
-        If InStr(1, proc.ExecutablePath, strDir, 1) > 0 Then
-            ' Already running from this directory, nothing to do
-            WScript.Quit 0
+        Set proc = GetObject("winmgmts:root/cimv2:Win32_Process.Handle='" & pid & "'")
+        If Err.Number = 0 Then
+            exePath = LCase(proc.ExecutablePath)
+            If InStr(exePath, LCase(strAgent)) > 0 Then
+                bSkip = True ' Same exe is already running
+            End If
         End If
     End If
     On Error Goto 0
 End If
 
-' Start the agent
-strAgent = """" & strDir & "\publish\cmdwallpaper_agent.exe"" """ & strDir & """"
-objShell.Run strAgent, 0, False
+If bSkip Then
+    WScript.Quit 0
+End If
+
+' ── Start agent with correct working directory ──
+objShell.CurrentDirectory = strDir
+cmd = """" & strAgent & """ ."
+objShell.Run cmd, 0, False
