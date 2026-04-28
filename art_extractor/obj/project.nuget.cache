@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "dgSpecHash": "B9WU7Ob1z4A=",
+  "success": true,
+  "projectFilePath": "F:\\1123\\cmdwallpaper\\art_extractor\\art_extractor.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\m1586\\.nuget\\packages\\microsoft.netcore.app.ref\\7.0.20\\microsoft.netcore.app.ref.7.0.20.nupkg.sha512",
+    "C:\\Users\\m1586\\.nuget\\packages\\microsoft.netcore.app.runtime.win-x64\\7.0.20\\microsoft.netcore.app.runtime.win-x64.7.0.20.nupkg.sha512",
+    "C:\\Users\\m1586\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\7.0.20\\microsoft.windowsdesktop.app.ref.7.0.20.nupkg.sha512",
+    "C:\\Users\\m1586\\.nuget\\packages\\microsoft.windowsdesktop.app.runtime.win-x64\\7.0.20\\microsoft.windowsdesktop.app.runtime.win-x64.7.0.20.nupkg.sha512",
+    "C:\\Users\\m1586\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\7.0.20\\microsoft.aspnetcore.app.ref.7.0.20.nupkg.sha512",
+    "C:\\Users\\m1586\\.nuget\\packages\\microsoft.aspnetcore.app.runtime.win-x64\\7.0.20\\microsoft.aspnetcore.app.runtime.win-x64.7.0.20.nupkg.sha512",
+    "C:\\Users\\m1586\\.nuget\\packages\\microsoft.netcore.app.host.win-x64\\7.0.20\\microsoft.netcore.app.host.win-x64.7.0.20.nupkg.sha512",
+    "C:\\Users\\m1586\\.nuget\\packages\\microsoft.windows.sdk.net.ref\\10.0.22621.55\\microsoft.windows.sdk.net.ref.10.0.22621.55.nupkg.sha512"
+  ],
+  "logs": []
+}

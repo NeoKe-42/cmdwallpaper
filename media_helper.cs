@@ -15,10 +15,11 @@ internal interface _IAudioMeterInformation { int GetPeakValue(out float pfPeak);
 public static class MediaHelper
 {
     static float _b, _m, _t;
+    static int _lastB = -1, _lastM = -1, _lastT = -1;
     static Thread _thread;
     static bool _running;
     static string _dir;
-    static DateTime _lastWrite = DateTime.MinValue;
+    static readonly object _lock = new object();
 
     public static void StartMeter(string dir) {
         _dir = dir;
@@ -29,7 +30,20 @@ public static class MediaHelper
     }
 
     static _IAudioMeterInformation GetMeter() {
-        try { var e = (_IMMDeviceEnumerator)new _MMDeviceEnumerator(); _IMMDevice d; e.GetDefaultAudioEndpoint(0, 0, out d); if (d == null) return null; Guid iid = new Guid("C02216F6-8C67-4B5B-9D00-D008E73E0064"); _IAudioMeterInformation m; d.Activate(ref iid, 0, IntPtr.Zero, out m); return m; } catch { return null; }
+        _IMMDeviceEnumerator e = null; _IMMDevice d = null;
+        try {
+            e = (_IMMDeviceEnumerator)new _MMDeviceEnumerator();
+            e.GetDefaultAudioEndpoint(0, 0, out d);
+            if (d == null) return null;
+            Guid iid = new Guid("C02216F6-8C67-4B5B-9D00-D008E73E0064");
+            _IAudioMeterInformation m;
+            d.Activate(ref iid, 0, IntPtr.Zero, out m);
+            return m;
+        } catch { return null; }
+        finally {
+            if (d != null) Marshal.ReleaseComObject(d);
+            if (e != null) Marshal.ReleaseComObject(e);
+        }
     }
 
     static void Loop() {
@@ -38,32 +52,34 @@ public static class MediaHelper
             if (meter == null) { Thread.Sleep(2000); continue; }
             while (_running) {
                 try {
-                    float peak = 0; int cc = 0;
-                    meter.GetPeakValue(out peak); meter.GetMeteringChannelCount(out cc);
-                    float[] ch = new float[Math.Max(2, Math.Min(8, cc))];
-                    if (cc > 0) try { meter.GetChannelsPeakValues(cc, ch); } catch { }
+                    float peak = 0;
+                    meter.GetPeakValue(out peak);
                     float ps = (float)Math.Sqrt(peak);
                     float b = Math.Min(100, peak * 130f), m = Math.Min(100, ps * 120f), t = Math.Min(100, peak * 110f);
-                    lock (typeof(MediaHelper)) { _b = b; _m = m; _t = t; }
-                    var now = DateTime.UtcNow;
-                    if (_dir != null && (now - _lastWrite).TotalMilliseconds > 80) {
-                        _lastWrite = now;
-                        try { File.WriteAllText(Path.Combine(_dir, "eq_data.json"), "{\"b\":" + ((int)b) + ",\"m\":" + ((int)m) + ",\"t\":" + ((int)t) + "}"); } catch { }
+                    int ib = (int)b, im = (int)m, it = (int)t;
+                    lock (_lock) { _b = b; _m = m; _t = t; }
+
+                    // Only write if values changed meaningfully
+                    if (Math.Abs(ib - _lastB) > 0 || Math.Abs(im - _lastM) > 0 || Math.Abs(it - _lastT) > 0)
+                    {
+                        _lastB = ib; _lastM = im; _lastT = it;
+                        if (_dir != null)
+                            try { File.WriteAllText(Path.Combine(_dir, "eq_data.json"), "{\"b\":" + ib + ",\"m\":" + im + ",\"t\":" + it + "}"); } catch { }
                     }
                 } catch {
-                    // COM error, device may have changed — re-acquire
                     Thread.Sleep(1000);
                     break;
                 }
-                Thread.Sleep(80);
+                Thread.Sleep(100);
             }
+            if (meter != null) { try { Marshal.ReleaseComObject(meter); } catch { } }
         }
     }
 
-    public static float GetEQBass() { return _b; }
-    public static float GetEQMid() { return _m; }
-    public static float GetEQTreble() { return _t; }
-    public static int GetMasterVolume(out bool muted) { muted = false; try { var m = GetMeter(); if (m == null) return -1; float p; m.GetPeakValue(out p); return (int)Math.Round(p * 100); } catch { return -1; } }
+    public static float GetEQBass() { lock (_lock) { return _b; } }
+    public static float GetEQMid() { lock (_lock) { return _m; } }
+    public static float GetEQTreble() { lock (_lock) { return _t; } }
+    public static int GetMasterVolume(out bool muted) { muted = false; try { var m = GetMeter(); if (m == null) return -1; float p; m.GetPeakValue(out p); Marshal.ReleaseComObject(m); return (int)Math.Round(p * 100); } catch { return -1; } }
 
     // Window title fallback
     public static string GetNowPlaying(out string title, out string artist, out string album) {

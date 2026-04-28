@@ -7,7 +7,17 @@
       "Bash(wscript.exe *)",
       "PowerShell(& \"C:\\\\Windows\\\\Microsoft.NET\\\\Framework64\\\\v4.0.30319\\\\csc.exe\" /target:library /out:\"F:\\\\1123\\\\cmdwallpaper\\\\media_helper.dll\" \"F:\\\\1123\\\\cmdwallpaper\\\\media_helper.cs\" /noconfig /nostdlib /reference:\"C:\\\\Windows\\\\Microsoft.NET\\\\Framework64\\\\v4.0.30319\\\\mscorlib.dll\" /reference:\"C:\\\\Windows\\\\Microsoft.NET\\\\Framework64\\\\v4.0.30319\\\\System.dll\" /reference:\"C:\\\\Windows\\\\Microsoft.NET\\\\Framework64\\\\v4.0.30319\\\\System.Core.dll\")",
       "PowerShell(dotnet build *)",
-      "WebFetch(domain:steamcommunity.com)"
+      "WebFetch(domain:steamcommunity.com)",
+      "Bash(C:/Windows/Microsoft.NET/Framework64/v4.0.30319/csc.exe *)",
+      "Bash(taskkill /f /im art_extractor.exe)",
+      "Bash(\"F:\\\\1123\\\\cmdwallpaper\\\\art_extractor\\\\publish\\\\art_extractor.exe\" \"F:\\\\1123\\\\cmdwallpaper\")",
+      "Bash(\"F:\\\\1123\\\\cmdwallpaper\\\\smtc_service\\\\publish\\\\smtc_service.exe\" \"F:\\\\1123\\\\cmdwallpaper\")",
+      "Bash(echo \"Exit: $?\")",
+      "Bash(taskkill /f /im smtc_service.exe)",
+      "Bash(cscript //Nologo start_service.vbs sleep 8 tasklist)",
+      "Bash(grep -E \"smtc_service|art_extractor\" echo \"---\" ls \"F:\\\\1123\\\\cmdwallpaper\\\\art_extractor.log\")",
+      "Bash(cscript //Nologo start_service.vbs)",
+      "Bash(tasklist)"
     ]
   }
 }

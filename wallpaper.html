@@ -59,17 +59,24 @@ var R=500,S={npTitle:null,npStart:0,npDur:0,vol:50,sm:{b:0,m:0,t:0}};
   setTimeout(tck,1000);
 })();
 
-// EQ bars animation
+// EQ bars animation (throttled to ~10fps)
+var _lastEQ='';
 (function anm(){
+  var last=arguments.callee._t||0, now=Date.now();
+  if(now-last<100){requestAnimationFrame(anm);return}
+  arguments.callee._t=now;
   var sm=S.sm;
   var b=S.eqB||0,m=S.eqM||0,t=S.eqT||0;
   sm.b+=(b-sm.b)*0.4;sm.m+=(m-sm.m)*0.4;sm.t+=(t-sm.t)*0.4;
   var bf=Math.round(sm.b/5),mf=Math.round(sm.m/5),tf=Math.round(sm.t/5);
-  var eqEl=document.getElementById('eqbars');
-  if(eqEl)eqEl.innerHTML=
-    '<span class="eq-b">'+'█'.repeat(bf)+'</span><span class="eq-s">'+'█'.repeat(20-bf)+'</span> BASS  '+
+  var html='<span class="eq-b">'+'█'.repeat(bf)+'</span><span class="eq-s">'+'█'.repeat(20-bf)+'</span> BASS  '+
     '<span class="eq-m">'+'█'.repeat(mf)+'</span><span class="eq-s">'+'█'.repeat(20-mf)+'</span> MID  '+
     '<span class="eq-t">'+'█'.repeat(tf)+'</span><span class="eq-s">'+'█'.repeat(20-tf)+'</span> TREB';
+  if(html!==_lastEQ){
+    _lastEQ=html;
+    var eqEl=document.getElementById('eqbars');
+    if(eqEl)eqEl.innerHTML=html;
+  }
   requestAnimationFrame(anm);
 })();
 
@@ -160,9 +167,6 @@ function load(){
       // Render right panel
       var html='<div>'+lines.join('</div><div>')+'</div>';
       if(S._lastRight!==html){S._lastRight=html;document.getElementById('right').innerHTML=html}
-
-      // Audio EQ fallback
-      if(!_weHasAudio&&d.audio){S.eqB=d.audio.eq_bass||0;S.eqM=d.audio.eq_mid||0;S.eqT=d.audio.eq_treble||0;S.vol=d.audio.volume||50}
 
       // Update time
       var n=new Date();
