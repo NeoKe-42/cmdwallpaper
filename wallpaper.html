@@ -237,7 +237,7 @@ try {
   EQ.lastError = String(err && err.message ? err.message : err);
 }
 
-// Fallback: data/eq_data.json only when WE audio is unavailable
+// ── Fallback: data/eq_data.json only when WE audio is unavailable
 setInterval(function () {
   if (EQ.hasWallpaperAudio && Date.now() - EQ.lastFrameAt < 3000) return;
   var x = new XMLHttpRequest();

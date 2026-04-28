@@ -51,7 +51,14 @@ dotnet publish cmdwallpaper_agent.csproj -c Release -r win-x64 -o publish
 
 ## Troubleshooting
 
-**EQ bars not moving**: make sure `project.json` has `"supportsaudioprocessing": true` and audio is playing.
+**EQ shows REGISTERED-NO-FRAMES**:
+1. Open the wallpaper in Wallpaper Engine Editor.
+2. Click Edit → Open in Explorer to check the copied `project.json` in WE's `myprojects` folder.
+3. Make sure `supportsaudioprocessing` is `true` (both root-level and inside `general`).
+4. Save the wallpaper once in the editor and reload it.
+5. In Wallpaper Engine settings, check General → Media → Audio recording device.
+6. Make sure Wallpaper Engine is not muted in Windows Volume Mixer.
+7. If using a USB/Bluetooth headset, try 44100 Hz sample rate.
 
 **System info shows "System helper not installed"**: run `install.ps1` to enable the C# system info agent.
 
