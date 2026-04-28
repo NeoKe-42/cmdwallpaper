@@ -1,60 +1,96 @@
 <!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><style>
+:root {
+  --bg: #282c34; --bg2: #21252b; --fg: #abb2bf; --muted: #5c6370;
+  --red: #e06c75; --green: #98c379; --yellow: #e5c07b;
+  --blue: #61afef; --purple: #c678dd; --cyan: #56b6c2; --white: #dcdfe4;
+  --bar-bg: #3a3f4b;
+}
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;height:100%;background:transparent;overflow:hidden;font-family:"Consolas","Courier New","Microsoft YaHei","SimHei",monospace;font-size:22px}
+html,body{width:100%;height:100%;background:var(--bg);overflow:hidden;
+  font-family:"Cascadia Mono","CaskaydiaCove Nerd Font","JetBrains Mono","Fira Code","Consolas","Microsoft YaHei","SimHei",monospace;
+  font-size:clamp(18px,1.45vw,24px);line-height:1.28;color:var(--fg)}
 body{display:flex;align-items:center;justify-content:center}
-.w{background:#0c0c0c;border:1px solid #555;width:1100px;min-width:1100px;max-width:1100px;padding:20px 28px 18px 28px;color:#c0c0c0;overflow:hidden}
-.tb{color:#c0c0c0;font-size:19px;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid #444;white-space:nowrap;overflow:hidden;font-variant-numeric:tabular-nums}
-.tb .l{color:#0f0}.tb .s{color:#666}
-.sys{line-height:1.7;margin-bottom:8px}
-.sys .k{color:#0f0}.sys .v{color:#f0f0f0}.sys .m{color:#999;font-size:19px}
-.sys .sep{color:#555;margin:4px 0;font-size:19px}
-.np-block{display:flex;gap:22px;margin:8px 0}
-.np-left{flex-shrink:0;width:200px}
-.art-box{width:200px;height:200px;border:1px solid #555;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center}
+.w{width:min(1280px,96vw);min-width:min(1280px,96vw);max-width:1280px;
+  background:transparent;border:none;box-shadow:none;
+  padding:clamp(24px,3vw,40px);color:var(--fg);overflow:hidden}
+.tb{color:var(--muted);font-size:clamp(18px,1.45vw,24px);margin-bottom:20px;padding-bottom:10px;
+  border-bottom:1px solid var(--muted);white-space:nowrap;overflow:hidden;font-variant-numeric:tabular-nums}
+.tb .l{color:var(--green)}.tb .s{color:var(--muted)}
+.main-grid{display:flex;gap:clamp(24px,3vw,48px);margin-bottom:16px;align-items:flex-start}
+.ascii-logo{flex-shrink:0;color:var(--blue);line-height:1.08;font-size:clamp(14px,1.15vw,18px);white-space:pre}
+.sys{flex:1;min-width:0;line-height:1.55}
+.sys .k{color:var(--yellow);white-space:nowrap}
+.sys .v{color:var(--fg)}
+.sys .m{color:var(--muted)}
+.sys .sep{color:var(--muted);margin:2px 0}
+.sys .info-title{color:var(--yellow)}
+.sys .info-sep{color:var(--muted);margin:1px 0 6px 0}
+.sys .info-hint{color:var(--muted);font-size:clamp(14px,1.1vw,18px)}
+.media-row{display:flex;gap:18px;align-items:center;margin:10px 0;padding-top:10px;border-top:1px solid var(--muted)}
+.art-box{width:120px;height:120px;min-width:120px;border:1px solid var(--muted);background:var(--bg2);
+  display:flex;align-items:center;justify-content:center}
 .art-box img{width:100%;height:100%;object-fit:cover}
-.art-ph{color:#444;font-size:15px;text-align:center;line-height:1.5}
-.np-right{flex:1;min-width:0}
-.np-prog{line-height:1.5;margin-bottom:4px}
-.np-prog .time{color:#999;font-size:19px}
-.np-title{color:#fff;font-size:22px;line-height:1.5}
-.np-artist{color:#00ccff;font-size:20px}
-.np-album{color:#999;font-size:18px}
-.eq-block{display:flex;gap:10px;line-height:1.5;margin-top:6px}
-.eq-labels{flex-shrink:0;display:flex;flex-direction:column;gap:2px;font-size:19px}
-.eq-labels .l1{color:#ff5555}.eq-labels .l2{color:#f1fa8c}.eq-labels .l3{color:#50fa7b}
-.eq-bars{display:flex;flex-direction:column;gap:2px;width:460px;min-width:460px;max-width:460px;flex:none}
-.eq-row{display:flex;align-items:center;font-size:18px;white-space:nowrap;width:460px;overflow:hidden}
-.eq-b{color:#ff5555}.eq-m{color:#f1fa8c}.eq-t{color:#50fa7b}.eq-s{color:#222}.eq-p{color:#666;margin-left:10px;font-size:15px;width:56px;min-width:56px;display:inline-block;text-align:right;font-variant-numeric:tabular-nums}
-#u{color:#555;font-size:15px;text-align:right;margin-top:10px;padding-top:6px;border-top:1px solid #444;white-space:nowrap;overflow:hidden;text-overflow:clip;width:100%;font-variant-numeric:tabular-nums}
+.art-ph{color:var(--muted);font-size:14px;text-align:center;line-height:1.5}
+.np-info{flex:1;min-width:0;line-height:1.45}
+.np-prog .time{color:var(--muted)}
+.np-title{color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.np-artist{color:var(--cyan)}
+.np-album{color:var(--muted)}
+.eq-block{display:flex;gap:10px;line-height:1.5;margin-top:10px;padding-top:10px;border-top:1px solid var(--muted)}
+.eq-labels{flex-shrink:0;display:flex;flex-direction:column;gap:2px}
+.eq-lb{color:var(--red)}.eq-lm{color:var(--yellow)}.eq-lt{color:var(--green)}
+.eq-bars{display:flex;flex-direction:column;gap:2px;width:480px;min-width:480px;max-width:480px;flex:none}
+.eq-row{display:flex;align-items:center;white-space:nowrap;width:480px;overflow:hidden}
+.eq-b{color:var(--red)}.eq-m{color:var(--yellow)}.eq-t{color:var(--green)}.eq-s{color:var(--bar-bg)}
+.eq-p{color:var(--muted);margin-left:10px;font-size:clamp(12px,0.95vw,16px);width:50px;min-width:50px;
+  display:inline-block;text-align:right;font-variant-numeric:tabular-nums}
+#u{color:var(--muted);font-size:clamp(11px,0.85vw,15px);text-align:right;margin-top:10px;padding-top:6px;
+  border-top:1px solid var(--muted);white-space:nowrap;overflow:hidden;text-overflow:clip;width:100%;font-variant-numeric:tabular-nums}
 </style></head><body>
 <div class="w">
 <div class="tb">
 <span class="l" id="uprompt">C:\Users\user&gt;</span> <span id="td">00:00:00</span><span class="s">|</span><span id="tp">60.5%</span><span class="s">|</span><span id="dt">----</span>
 </div>
+
+<div class="main-grid">
+<pre class="ascii-logo" id="asciiLogo">
+    ██████╗
+  ██╔════██╗
+  ██║    ██║
+  ██║    ██║
+  ██████████║
+  ██╔════██║
+  ██║    ██║
+  ██║    ██║
+  ╚═╝    ╚═╝
+</pre>
 <div class="sys" id="sys"></div>
-<div class="np-block">
-<div class="np-left">
-<div class="art-box"><img id="art" style="display:none"><div class="art-ph" id="artph"><span style="font-size:40px;color:#444">&#9835;</span><br>no album<br>art</div></div>
 </div>
-<div class="np-right">
+
+<div class="media-row">
+<div class="art-box"><img id="art" style="display:none"><div class="art-ph" id="artph"><span style="font-size:32px;color:var(--muted)">&#9835;</span><br>no album<br>art</div></div>
+<div class="np-info">
 <div class="np-prog" id="npprog"><span class="time">--:--</span> no media</div>
 <div class="np-title" id="nptitle"></div>
 <div class="np-artist" id="npartist"></div>
 <div class="np-album" id="npalbum"></div>
+</div>
+</div>
+
 <div class="eq-block">
-<div class="eq-labels"><span class="l1">BASS</span><span class="l2">MID</span><span class="l3">TREB</span></div>
+<div class="eq-labels"><span class="eq-lb">Bass</span><span class="eq-lm">Mid</span><span class="eq-lt">Treb</span></div>
 <div class="eq-bars">
 <div class="eq-row" id="eqb"></div>
 <div class="eq-row" id="eqm"></div>
 <div class="eq-row" id="eqt"></div>
 </div>
 </div>
-</div>
-</div>
+
 <div id="u"></div>
 </div>
 <script>
 (function(){
+var DEBUG_AUDIO = false;
 var S={
   npTitle:null,npStart:0,npDur:0,sm:{b:0,m:0,t:0},
   _artLoaded:false,_artRetries:0,_lastNpState:null
@@ -91,9 +127,11 @@ var mediaState = {
 
 // ── Helpers ──────────────────────────────────────────────
 function pg(p,w){w=w||30;var f=Math.round(p/100*w);if(f<0)f=0;if(f>w)f=w;
-  var c=p>=80?'#ff5555':p>=50?'#f1fa8c':'#50fa7b';
+  var c=p>=80?getComputedStyle(document.documentElement).getPropertyValue('--red').trim():
+          p>=50?getComputedStyle(document.documentElement).getPropertyValue('--yellow').trim():
+                getComputedStyle(document.documentElement).getPropertyValue('--green').trim();
   var e=w-f;
-  return'<span style="color:'+c+'">'+'█'.repeat(f)+'</span><span style="color:#333">'+'█'.repeat(e)+'</span>';
+  return'<span style="color:'+c+'">'+'█'.repeat(f)+'</span><span style="color:var(--bar-bg)">'+'█'.repeat(e)+'</span>';
 }
 function e(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 function fm(g){return g>=1000?(g/1024).toFixed(1)+' TB':g.toFixed(1)+' GiB'}
@@ -104,14 +142,12 @@ function setAlbumArt(src, source) {
   var art = document.getElementById('art');
   var ph = document.getElementById('artph');
   if (!art || !ph || !src) return;
-
   art.onload = function () {
     art.style.display = 'block';
     ph.style.display = 'none';
     if(source==='native') mediaState.hasNativeArt = true;
     S._artLoaded = true;
   };
-
   art.onerror = function () {
     if (source === 'native') {
       mediaState.hasNativeArt = false;
@@ -119,17 +155,12 @@ function setAlbumArt(src, source) {
       ph.style.display = '';
     }
   };
-
   art.src = src;
 }
 
 // ── WE Native Media Listeners ────────────────────────────
-// Thumbnail: set directly (base64 PNG)
 function wallpaperMediaThumbnailListener(event) {
-  if (!event || !event.thumbnail) {
-    mediaState.hasNativeArt = false;
-    return;
-  }
+  if (!event || !event.thumbnail) { mediaState.hasNativeArt = false; return; }
   mediaState.hasNativeMedia = true;
   mediaState.thumbnail = event.thumbnail;
   mediaState.lastThumbAt = Date.now();
@@ -139,7 +170,6 @@ if (typeof window.wallpaperRegisterMediaThumbnailListener === 'function') {
   window.wallpaperRegisterMediaThumbnailListener(wallpaperMediaThumbnailListener);
 }
 
-// Properties: title, artist, album
 function wallpaperMediaPropertiesListener(event) {
   if (!event) return;
   mediaState.hasNativeMedia = true;
@@ -154,23 +184,20 @@ if (typeof window.wallpaperRegisterMediaPropertiesListener === 'function') {
   window.wallpaperRegisterMediaPropertiesListener(wallpaperMediaPropertiesListener);
 }
 
-// Playback state
 function wallpaperMediaPlaybackListener(event) {
   if (!event || !window.wallpaperMediaIntegration) return;
   mediaState.hasNativeMedia = true;
-  if (event.state === window.wallpaperMediaIntegration.PLAYBACK_PLAYING) {
+  if (event.state === window.wallpaperMediaIntegration.PLAYBACK_PLAYING)
     mediaState.playbackState = 'playing';
-  } else if (event.state === window.wallpaperMediaIntegration.PLAYBACK_PAUSED) {
+  else if (event.state === window.wallpaperMediaIntegration.PLAYBACK_PAUSED)
     mediaState.playbackState = 'paused';
-  } else {
+  else
     mediaState.playbackState = 'stopped';
-  }
 }
 if (typeof window.wallpaperRegisterMediaPlaybackListener === 'function') {
   window.wallpaperRegisterMediaPlaybackListener(wallpaperMediaPlaybackListener);
 }
 
-// Timeline: position, duration
 function wallpaperMediaTimelineListener(event) {
   if (!event) return;
   mediaState.hasNativeMedia = true;
@@ -184,18 +211,27 @@ if (typeof window.wallpaperRegisterMediaTimelineListener === 'function') {
 
 // ── EQ: Wallpaper Engine native audio listener ───────────
 var EQ = {
-  registered: false,
-  hasWallpaperAudio: false,
-  frames: 0,
-  lastLen: 0,
-  lastFrameAt: 0,
-  lastNonZeroAt: 0,
-  lastError: '',
-  source: 'none',
-  lastSum: 0,
-  lastMax: 0,
-  lastAvg: 0
+  registered: false, hasWallpaperAudio: false,
+  frames: 0, lastLen: 0, lastFrameAt: 0, lastNonZeroAt: 0,
+  lastError: '', source: 'none',
+  lastSum: 0, lastMax: 0, lastAvg: 0
 };
+
+var EqNorm = { peakB: 0.003, peakM: 0.003, peakT: 0.003 };
+
+function normalizeBand(value, peakKey) {
+  var minPeak = 0.003;
+  var attack = 0.35;
+  var release = 0.995;
+  value = Math.max(0, Number(value) || 0);
+  if (value > EqNorm[peakKey]) {
+    EqNorm[peakKey] = EqNorm[peakKey] * (1 - attack) + value * attack;
+  } else {
+    EqNorm[peakKey] = Math.max(minPeak, EqNorm[peakKey] * release);
+  }
+  var normalized = value / Math.max(minPeak, EqNorm[peakKey]);
+  return Math.max(0, Math.min(1, normalized));
+}
 
 function wallpaperAudioListener(audioArray) {
   try {
@@ -203,13 +239,9 @@ function wallpaperAudioListener(audioArray) {
       EQ.lastError = 'invalid audioArray length';
       return;
     }
-
     var bass = 0, mid = 0, treble = 0;
     var bc = 0, mc = 0, tc = 0;
-    var bassPeak = 0, midPeak = 0, treblePeak = 0;
     var sumAll = 0, maxAll = 0;
-
-    // Full-array diagnostics first.
     for (var j = 0; j < audioArray.length; j++) {
       var raw = Math.min(Number(audioArray[j]) || 0, 1);
       sumAll += raw;
@@ -218,65 +250,38 @@ function wallpaperAudioListener(audioArray) {
     EQ.lastSum = sumAll;
     EQ.lastMax = maxAll;
     EQ.lastAvg = sumAll / audioArray.length;
-
-    // Wallpaper Engine audioArray:
-    // 0-63 = left channel, 64-127 = right channel.
-    // Merge L/R first, then split 0-63 into bands.
     for (var i = 0; i < 64; i++) {
       var left = Math.min(Number(audioArray[i]) || 0, 1);
       var right = Math.min(Number(audioArray[i + 64]) || 0, 1);
       var v = (left + right) / 2;
-
-      if (i < 8) {
-        bass += v; bc++;
-        if (v > bassPeak) bassPeak = v;
-      } else if (i < 32) {
-        mid += v; mc++;
-        if (v > midPeak) midPeak = v;
-      } else {
-        treble += v; tc++;
-        if (v > treblePeak) treblePeak = v;
-      }
+      if (i < 8)       { bass += v; bc++; }
+      else if (i < 32) { mid  += v; mc++; }
+      else             { treble += v; tc++; }
     }
-
     var avgB = bass / Math.max(1, bc);
-    var avgM = mid / Math.max(1, mc);
+    var avgM = mid  / Math.max(1, mc);
     var avgT = treble / Math.max(1, tc);
-
-    // Use avg + peak and nonlinear compression. WE Web audio values are often tiny
-    // (max around 0.02-0.08), so linear gain still looks static in a terminal bar.
-    function bandToPercent(avg, peak, gain, floor) {
-      var energy = avg * 0.65 + peak * 0.35;
-      var amplified = Math.min(1, energy * gain);
-      var pct = Math.pow(amplified, 0.62) * 100;
-      if (sumAll > 0.02) pct = Math.max(pct, floor);
-      if (pct < 0.5) pct = 0;
-      return Math.max(0, Math.min(100, pct));
-    }
-
-    var nextB = bandToPercent(avgB, bassPeak, 38, 8);
-    var nextM = bandToPercent(avgM, midPeak, 52, 6);
-    var nextT = bandToPercent(avgT, treblePeak, 78, 4);
-
-    // Silence / pause decay. If audio frames still arrive with near-zero values,
-    // decay gently instead of freezing the last visible bars.
-    if (sumAll <= 0.001 || maxAll <= 0.0005) {
+    var totalEnergy = avgB + avgM + avgT;
+    if (totalEnergy < 0.0005) {
       S.eqB *= 0.84; if (S.eqB < 0.5) S.eqB = 0;
       S.eqM *= 0.84; if (S.eqM < 0.5) S.eqM = 0;
       S.eqT *= 0.84; if (S.eqT < 0.5) S.eqT = 0;
     } else {
-      // Fast enough to be visible, but still smoothed for wallpaper use.
-      S.eqB = (S.eqB || 0) * 0.45 + nextB * 0.55;
-      S.eqM = (S.eqM || 0) * 0.42 + nextM * 0.58;
-      S.eqT = (S.eqT || 0) * 0.38 + nextT * 0.62;
+      var nB = normalizeBand(avgB, 'peakB');
+      var nM = normalizeBand(avgM, 'peakM');
+      var nT = normalizeBand(avgT, 'peakT');
+      var nextB = Math.pow(nB, 0.65) * 100;
+      var nextM = Math.pow(nM, 0.65) * 100;
+      var nextT = Math.pow(nT, 0.65) * 100;
+      S.eqB = (S.eqB || 0) * 0.65 + nextB * 0.35;
+      S.eqM = (S.eqM || 0) * 0.60 + nextM * 0.40;
+      S.eqT = (S.eqT || 0) * 0.55 + nextT * 0.45;
     }
-
     EQ.hasWallpaperAudio = true;
     EQ.frames++;
     EQ.lastLen = audioArray.length;
     EQ.lastFrameAt = Date.now();
     EQ.source = 'WE-AUDIO';
-    if (sumAll > 0.001) EQ.lastNonZeroAt = Date.now();
   } catch (err) {
     EQ.lastError = String(err && err.message ? err.message : err);
   }
@@ -339,25 +344,29 @@ setInterval(function () {
 
       if(s){
         var uname=s.username||'user';
+        var host=s.hostname||'?';
         document.getElementById('uprompt').textContent='C:\\Users\\'+uname+'>';
-        lines.push('<span class="k">user  </span><span class="v">'+e(uname)+'</span><span class="m"> @ </span><span class="v">'+e(s.hostname||'?')+'</span>');
+        lines.push('<div class="info-title">'+e(uname)+'@'+e(host)+'</div>');
+        lines.push('<div class="info-sep">'+'─'.repeat(36)+'</div>');
       }
-      lines.push('<div class="sep">'+'─'.repeat(48)+'</div>');
-      if(o)lines.push('<span class="k">os   </span><span class="v">'+e(o.name||'?')+'</span> <span class="m">'+e(o.version||'')+' ('+e(o.architecture||'')+')</span>');
-      if(c)lines.push('<span class="k">cpu  </span><span class="v">'+e(c.name||'?')+'</span> <span class="m">'+(c.cores||0)+'C/'+(c.threads||0)+'T @ '+(c.frequency_mhz||0)+'MHz</span>');
-      if(g){var gn='';if(typeof g==='string')gn=g;else if(Array.isArray(g)){gn=g.filter(function(x){return x.indexOf('OrayIdd')<0})[0]||g[0]||''} if(gn)lines.push('<span class="k">gpu  </span><span class="v">'+e(gn)+'</span>')}
-      if(m)lines.push('<span class="k">ram  </span><span class="v">'+fm(m.used_gb||0)+'</span><span class="m"> / '+fm(m.total_gb||0)+' ('+(m.percent||0).toFixed(0)+'%)</span> '+pg(m.percent||0,28));
-      lines.push('<div class="sep">'+'─'.repeat(48)+'</div>');
-      if(dk)Object.keys(dk).forEach(function(l){var dd=dk[l];lines.push('<span class="k">disk </span><span class="v">'+e(l.replace(':',''))+'</span> <span class="m"> '+fm(dd.used_gb||0)+' / '+fm(dd.total_gb||0)+' ('+(dd.percent||0).toFixed(0)+'%)</span> '+pg(dd.percent||0,28))});
-      if(nw&&nw.ipv4)lines.push('<span class="k">net  </span><span class="v">'+e(nw.ipv4)+'</span>'+(nw['interface']?'<span class="m"> ('+e(nw['interface'])+')</span>':''));
-      if(mb)lines.push('<span class="k">mb   </span><span class="m">'+e(mb)+'</span>');
+      if(o)lines.push('<span class="k">OS:      </span><span class="v">'+e(o.name||'?')+'</span> <span class="m">'+e(o.version||'')+' ('+e(o.architecture||'')+')</span>');
+      if(s)lines.push('<span class="k">Host:    </span><span class="v">'+e(s.hostname||'?')+'</span>');
+      if(mb)lines.push('<span class="k">Board:   </span><span class="m">'+e(mb)+'</span>');
+      if(o)lines.push('<span class="k">Kernel:  </span><span class="m">Windows NT '+e(o.version||'')+'</span>');
+      lines.push('<div class="sep">'+'─'.repeat(36)+'</div>');
+      if(c)lines.push('<span class="k">CPU:     </span><span class="v">'+e(c.name||'?')+'</span> <span class="m">('+(c.cores||0)+'C/'+(c.threads||0)+'T @ '+(c.frequency_mhz||0)+'MHz)</span>');
+      if(g){var gn='';if(typeof g==='string')gn=g;else if(Array.isArray(g)){gn=g.filter(function(x){return x.indexOf('OrayIdd')<0})[0]||g[0]||''} if(gn)lines.push('<span class="k">GPU:     </span><span class="v">'+e(gn)+'</span>')}
+      if(m)lines.push('<span class="k">Memory:  </span><span class="v">'+fm(m.used_gb||0)+'</span><span class="m"> / '+fm(m.total_gb||0)+' ('+(m.percent||0).toFixed(0)+'%)</span> '+pg(m.percent||0,22));
+      lines.push('<div class="sep">'+'─'.repeat(36)+'</div>');
+      if(dk)Object.keys(dk).forEach(function(l){var dd=dk[l];lines.push('<span class="k">Disk '+e(l.replace(':',''))+': </span><span class="m"> '+fm(dd.used_gb||0)+' / '+fm(dd.total_gb||0)+' ('+(dd.percent||0).toFixed(0)+'%)</span> '+pg(dd.percent||0,22))});
+      if(nw&&nw.ipv4)lines.push('<span class="k">Network: </span><span class="v">'+e(nw.ipv4)+'</span>');
 
       var html='<div>'+lines.join('</div><div>')+'</div>';
       if(S._lastSys!==html){S._lastSys=html;document.getElementById('sys').innerHTML=html}
     }catch(e){}
   };
   x.onerror=function(){
-    document.getElementById('sys').innerHTML='<span style="color:#888">System helper not installed</span><br><span style="color:#555;font-size:16px">Run install.ps1 to enable system stats</span>';
+    document.getElementById('sys').innerHTML='<span class="info-hint">System helper not installed<br>Run install.ps1 to enable system stats</span>';
   };
   x.send();
   setTimeout(loadSys,5000);
@@ -365,52 +374,39 @@ setInterval(function () {
 
 // ── Now playing display update (every 500ms) ─────────────
 setInterval(function(){
+  var art=document.getElementById('art');
+  var artph=document.getElementById('artph');
   var hasMedia = mediaState.hasNativeMedia && mediaState.title;
   var pos, dur;
 
   if (hasMedia) {
-    // Local position interpolation
     if (mediaState.playbackState === 'playing' && mediaState.duration > 0) {
       pos = Math.min(mediaState.position + (Date.now() - mediaState.lastTimelineUpdate) / 1000, mediaState.duration);
     } else {
       pos = mediaState.position;
     }
     dur = mediaState.duration;
-
     var pct = dur > 0 ? Math.min(99.9, pos / dur * 100) : 0;
     var prog = '<span class="time" id="postime">' + ft(pos) + '</span> ' + pg(pct, 30) + ' <span class="time">/ ' + ft(dur) + '</span>';
     if (S._lastNpProg !== prog) { S._lastNpProg = prog; document.getElementById('npprog').innerHTML = prog; }
-    S.npTitle = mediaState.title; // Keep for position ticker
+    S.npTitle = mediaState.title;
     S.npStart = Date.now() - pos * 1000;
     S.npDur = dur;
     S._lastNpState = 'playing';
-
-    // Local file fallback — only if native art not available
     if (!mediaState.hasNativeArt && !S._artLoaded && S._artRetries > 0 && pos >= 1) {
       S._artRetries--;
       var ts = encodeURIComponent(mediaState.title || Date.now());
-      var art = document.getElementById('art');
-      art.onload = function () {
-        this.style.display = 'block';
-        document.getElementById('artph').style.display = 'none';
-        S._artLoaded = true;
-      };
+      art.onload = function () { this.style.display = 'block'; artph.style.display = 'none'; S._artLoaded = true; };
       art.onerror = function () {
-        if (this.src.indexOf('album_art.png') !== -1) {
-          this.src = 'data/album_art.jpg?cb=' + ts;
-        } else {
-          this.style.display = 'none';
-          document.getElementById('artph').style.display = '';
-        }
+        if (this.src.indexOf('album_art.png') !== -1) { this.src = 'data/album_art.jpg?cb=' + ts; }
+        else { this.style.display = 'none'; artph.style.display = ''; }
       };
       art.src = 'data/album_art.png?cb=' + ts;
     }
   } else {
-    // Reset when no media — but preserve native art
     S.npTitle = null;
     if (!mediaState.hasNativeArt) {
-      document.getElementById('art').style.display = 'none';
-      document.getElementById('artph').style.display = '';
+      art.style.display = 'none'; artph.style.display = '';
     }
     if (S._lastNpState !== 'none') {
       S._lastNpState = 'none';
@@ -418,13 +414,12 @@ setInterval(function(){
       document.getElementById('nptitle').textContent = '';
       document.getElementById('npartist').textContent = '';
       document.getElementById('npalbum').textContent = '';
-      S._artLoaded = false;
-      S._artRetries = 0;
+      S._artLoaded = false; S._artRetries = 0;
     }
   }
 }, 500);
 
-// ── Position ticker (500ms, JS interpolation) ────────────
+// ── Position ticker (500ms) ──────────────────────────────
 setInterval(function(){
   if (!S.npTitle) return;
   var p = document.getElementById('postime');
@@ -453,22 +448,12 @@ setInterval(function(){
         document.getElementById('nptitle').textContent = d.title;
         document.getElementById('npartist').textContent = d.artist;
         document.getElementById('npalbum').textContent = d.album ? '[' + d.album + ']' : '';
-
-        // smtc art fallback — only if no native art
         if (!mediaState.hasNativeArt && d.has_art && sp >= 1) {
           S._artRetries = 3;
           var art = document.getElementById('art');
           var ts = encodeURIComponent(d.title || Date.now());
-          art.onload = function () {
-            this.style.display = 'block';
-            document.getElementById('artph').style.display = 'none';
-            S._artLoaded = true;
-          };
-          art.onerror = function () {
-            if (this.src.indexOf('album_art.png') !== -1) {
-              this.src = 'data/album_art.jpg?cb=' + ts;
-            }
-          };
+          art.onload = function () { this.style.display = 'block'; document.getElementById('artph').style.display = 'none'; S._artLoaded = true; };
+          art.onerror = function () { if (this.src.indexOf('album_art.png') !== -1) { this.src = 'data/album_art.jpg?cb=' + ts; } };
           art.src = 'data/album_art.png?cb=' + ts;
         }
       } else {
@@ -488,14 +473,8 @@ setInterval(function(){
 setInterval(function(){
   var n = new Date();
   var ts = n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(n.getDate()).padStart(2, '0') + ' ' + String(n.getHours()).padStart(2, '0') + ':' + String(n.getMinutes()).padStart(2, '0') + ':' + String(n.getSeconds()).padStart(2, '0');
-
-  var artState;
-  if (mediaState.hasNativeArt) artState = 'ART:NATIVE';
-  else if (S._artLoaded) artState = 'ART:FALLBACK';
-  else artState = 'ART:NONE';
-
+  var artState = mediaState.hasNativeArt ? 'ART:NATIVE' : (S._artLoaded ? 'ART:FALLBACK' : 'ART:NONE');
   var mediaSrc = mediaState.hasNativeMedia ? 'MEDIA:NATIVE' : 'MEDIA:JSON';
-
   var eqState;
   if (!EQ.registered) {
     eqState = 'EQ:NOT-REGISTERED';
@@ -503,14 +482,17 @@ setInterval(function(){
     eqState = 'EQ:REGISTERED-NO-FRAMES';
   } else if (EQ.hasWallpaperAudio && Date.now() - EQ.lastFrameAt < 3000) {
     var nz = EQ.lastNonZeroAt ? ((Date.now()-EQ.lastNonZeroAt)/1000).toFixed(1)+'s' : '?';
-    eqState = 'EQ:WE-AUDIO frames=' + EQ.frames + ' len=' + EQ.lastLen + ' max=' + EQ.lastMax.toFixed(3) + ' sum=' + EQ.lastSum.toFixed(3) + ' b/m/t=' + Math.round(S.eqB||0) + '/' + Math.round(S.eqM||0) + '/' + Math.round(S.eqT||0) + ' nz=' + nz;
+    if (DEBUG_AUDIO) {
+      eqState = 'EQ:WE-AUDIO frames=' + EQ.frames + ' len=' + EQ.lastLen + ' max=' + EQ.lastMax.toFixed(3) + ' sum=' + EQ.lastSum.toFixed(3) + ' b/m/t=' + Math.round(S.eqB||0) + '/' + Math.round(S.eqM||0) + '/' + Math.round(S.eqT||0) + ' pB=' + EqNorm.peakB.toFixed(4) + ' pM=' + EqNorm.peakM.toFixed(4) + ' pT=' + EqNorm.peakT.toFixed(4) + ' nz=' + nz;
+    } else {
+      eqState = 'EQ:WE-AUDIO frames=' + EQ.frames;
+    }
   } else if (EQ.source === 'JSON-FALLBACK') {
     eqState = 'EQ:JSON-FALLBACK';
   } else {
     eqState = 'EQ:STALE';
   }
-
-  document.getElementById('u').innerHTML = '<span style="color:#666">[' + ts + '] [' + artState + '] [' + mediaSrc + '] [' + eqState + ']</span>';
+  document.getElementById('u').innerHTML = '<span style="color:var(--muted)">[' + ts + '] [' + artState + '] [' + mediaSrc + '] [' + eqState + ']</span>';
 }, 1000);
 })();</script>
 </body></html>
