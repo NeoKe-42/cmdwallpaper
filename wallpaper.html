@@ -1,38 +1,60 @@
 <!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><style>
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;height:100%;background:transparent;overflow:hidden;font-family:"Segoe UI","Microsoft YaHei","微软雅黑","Consolas","PingFang SC","Noto Sans SC","SimHei",monospace,sans-serif;font-size:15px}
-body{display:flex;align-items:center;justify-content:center;color:#ccc}
-.t{background:rgba(12,12,16,0.94);border:1px solid #2a2a2a;border-radius:10px;padding:24px 32px 20px 32px;min-width:980px;max-width:1200px;box-shadow:0 4px 40px rgba(0,0,0,0.7),inset 0 1px 0 rgba(255,255,255,0.03)}
-.tb{color:#555;font-size:13px;margin-bottom:14px;display:flex;align-items:center;gap:10px;white-space:nowrap;padding-bottom:8px;border-bottom:1px solid #1e1e1e}
-.dot-r{color:#ff5f56}.dot-y{color:#ffbd2e}.dot-g{color:#27c93f}
-.userhost{color:#00ff88}.sep{color:#3a3a3a}
-.body{display:flex;gap:28px}
-.left{flex-shrink:0;width:180px;display:flex;flex-direction:column;align-items:center;gap:6px}
-.art-box{width:180px;height:180px;border:1px solid #2a2a2a;border-radius:6px;overflow:hidden;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center}
+html,body{width:100%;height:100%;background:transparent;overflow:hidden;font-family:"Consolas","Courier New","Microsoft YaHei","SimHei",monospace;font-size:22px}
+body{display:flex;align-items:center;justify-content:center}
+.w{background:#0c0c0c;border:1px solid #555;min-width:1100px;max-width:1400px;padding:20px 28px 18px 28px;color:#c0c0c0}
+/* Title bar */
+.tb{color:#c0c0c0;font-size:19px;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid #444;white-space:nowrap}
+.tb .l{color:#0f0}.tb .s{color:#666}
+/* System info */
+.sys{line-height:1.7;margin-bottom:8px}
+.sys .k{color:#0f0}.sys .v{color:#f0f0f0}.sys .m{color:#999;font-size:19px}
+.sys .sep{color:#555;margin:4px 0;font-size:19px}
+/* Now playing section */
+.np-block{display:flex;gap:22px;margin:8px 0}
+.np-left{flex-shrink:0;width:200px}
+.art-box{width:200px;height:200px;border:1px solid #555;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;position:relative}
 .art-box img{width:100%;height:100%;object-fit:cover;display:none}
-.art-placeholder{color:#333;font-size:12px;text-align:center;line-height:1.6}
-.right{flex:1;min-width:0;color:#ccc;line-height:1.8}
-.k{color:#00ff88}.v{color:#ddd}.m{color:#888;font-size:13px}
-.sep-line{color:#333;font-size:13px;margin:2px 0}
-.np-none{color:#555;font-size:14px;font-style:italic}
-.title{color:#fff;font-size:15px}.artist{color:#00ccff;font-size:14px}.album{color:#777;font-size:13px}
-.time{color:#888;font-size:13px}
+.art-ph{color:#444;font-size:15px;text-align:center;line-height:1.5}
+.np-right{flex:1;min-width:0}
+.np-prog{line-height:1.5;margin-bottom:4px}
+.np-prog .time{color:#999;font-size:19px}
+.np-title{color:#fff;font-size:22px;line-height:1.5}
+.np-artist{color:#00ccff;font-size:20px}
+.np-album{color:#999;font-size:18px}
+/* EQ vertical bars */
+.eq-block{display:flex;gap:10px;line-height:1.5;margin-top:6px}
+.eq-labels{flex-shrink:0;display:flex;flex-direction:column;gap:2px;font-size:19px}
+.eq-labels .l1{color:#ff5555}.eq-labels .l2{color:#f1fa8c}.eq-labels .l3{color:#50fa7b}
+.eq-bars{display:flex;flex-direction:column;gap:2px;flex:1;max-width:320px}
+.eq-row{display:flex;align-items:center;font-size:18px}
+/* EQ bar colors */
 .eq-b{color:#ff5555}.eq-m{color:#f1fa8c}.eq-t{color:#50fa7b}.eq-s{color:#222}
-#u{color:#444;font-size:11px;text-align:right;margin-top:8px;border-top:1px solid #1e1e1e;padding-top:6px}
+/* Footer */
+#u{color:#555;font-size:15px;text-align:right;margin-top:10px;padding-top:6px;border-top:1px solid #444}
 </style></head><body>
-<div class="t">
+<div class="w">
 <div class="tb">
-<span class="dot-r">●</span><span class="dot-y">●</span><span class="dot-g">●</span>
-<span class="userhost" id="tu">m1586@wangke</span>:~/
-<span id="td">00:00:00</span><span class="sep">|</span><span id="tb"></span><span id="tp">0%</span><span class="sep">|</span><span id="dt">----</span>
+<span class="l">C:\Users\m1586&gt;</span> <span id="td">00:00:00</span><span class="s">|</span><span id="tp">60.5%</span><span class="s">|</span><span id="dt">----</span>
 </div>
-<div class="body">
-<div class="left">
-<div class="art-box"><img id="art" style="display:none"><div class="art-placeholder" id="artph"><span style="font-size:32px;color:#444">♪</span><br>no album<br>art</div></div>
+<div class="sys" id="sys"></div>
+<div class="np-block">
+<div class="np-left">
+<div class="art-box"><img id="art" style="display:none"><div class="art-ph" id="artph"><span style="font-size:40px;color:#444">♪</span><br>no album<br>art</div></div>
 </div>
-<div class="right">
-<div id="info"></div>
-<div id="eqbars"></div>
+<div class="np-right">
+<div class="np-prog" id="npprog"></div>
+<div class="np-title" id="nptitle"></div>
+<div class="np-artist" id="npartist"></div>
+<div class="np-album" id="npalbum"></div>
+<div class="eq-block">
+<div class="eq-labels"><span class="l1">BASS</span><span class="l2">MID</span><span class="l3">TREB</span></div>
+<div class="eq-bars" id="eqbars">
+<div class="eq-row" id="eqb"><span class="eq-b">█</span></div>
+<div class="eq-row" id="eqm"><span class="eq-m">█</span></div>
+<div class="eq-row" id="eqt"><span class="eq-t">█</span></div>
+</div>
+</div>
 </div>
 </div>
 <div id="u"></div>
@@ -46,26 +68,37 @@ var R=500,S={npTitle:null,npStart:0,npDur:0,vol:50,sm:{b:0,m:0,t:0}};
   var n=new Date(),h=n.getHours(),m=n.getMinutes(),s=n.getSeconds();
   document.getElementById('td').textContent=String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
   document.getElementById('dt').textContent=n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0')+' '+['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][n.getDay()];
-  var pct=(h*3600+m*60+s)/86400*100,w=20,f=Math.round(pct/100*w),c=pct>80?'#ff5555':pct>60?'#f1fa8c':'#50fa7b';
-  document.getElementById('tb').innerHTML='<span style="color:'+c+'">'+'█'.repeat(f)+'</span><span style="color:#333">'+'█'.repeat(w-f)+'</span>';
+  var pct=(h*3600+m*60+s)/86400*100;
   document.getElementById('tp').textContent=pct.toFixed(1)+'%';
   setTimeout(tck,1000);
 })();
 
-// EQ animation (throttled to ~10fps, never touches #info DOM)
-var _lastEQ='';
-(function anm(){
-  var t=Date.now();
-  if(t-(anm._ts||0)<100){requestAnimationFrame(anm);return}
-  anm._ts=t;
+// Progress bar helper: returns colored bar HTML
+// green <50%, yellow <80%, red >=80%
+function pg(p,w){w=w||30;var f=Math.round(p/100*w);if(f<0)f=0;if(f>w)f=w;
+  var c=p>=80?'#ff5555':p>=50?'#f1fa8c':'#50fa7b';
+  var e=w-f;
+  return'<span style="color:'+c+'">'+'█'.repeat(f)+'</span><span style="color:#333">'+'█'.repeat(e)+'</span>';
+}
+
+// Helpers
+function e(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function fm(g){return g>=1000?(g/1024).toFixed(1)+' TB':g.toFixed(1)+' GiB'}
+function ft(s){s=isNaN(s)?0:Math.max(0,Math.round(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
+
+// EQ bar update (animation)
+(function eqAnm(){
+  var w=28;
   var sm=S.sm,b=S.eqB||0,m=S.eqM||0,t=S.eqT||0;
   sm.b+=(b-sm.b)*0.4;sm.m+=(m-sm.m)*0.4;sm.t+=(t-sm.t)*0.4;
-  var bf=Math.round(sm.b/5),mf=Math.round(sm.m/5),tf=Math.round(sm.t/5);
-  var h='<span class="eq-b">'+'█'.repeat(bf)+'</span><span class="eq-s">'+'█'.repeat(20-bf)+'</span> BASS  '+
-    '<span class="eq-m">'+'█'.repeat(mf)+'</span><span class="eq-s">'+'█'.repeat(20-mf)+'</span> MID  '+
-    '<span class="eq-t">'+'█'.repeat(tf)+'</span><span class="eq-s">'+'█'.repeat(20-tf)+'</span> TREB';
-  if(h!==_lastEQ){_lastEQ=h;document.getElementById('eqbars').innerHTML=h}
-  requestAnimationFrame(anm);
+  var bf=Math.max(0,Math.round(sm.b/100*w)),mf=Math.max(0,Math.round(sm.m/100*w)),tf=Math.max(0,Math.round(sm.t/100*w));
+  var hb='<span class="eq-b">'+'█'.repeat(bf)+'</span><span class="eq-s">'+'█'.repeat(w-bf)+'</span>';
+  var hm='<span class="eq-m">'+'█'.repeat(mf)+'</span><span class="eq-s">'+'█'.repeat(w-mf)+'</span>';
+  var ht='<span class="eq-t">'+'█'.repeat(tf)+'</span><span class="eq-s">'+'█'.repeat(w-tf)+'</span>';
+  document.getElementById('eqb').innerHTML=hb;
+  document.getElementById('eqm').innerHTML=hm;
+  document.getElementById('eqt').innerHTML=ht;
+  setTimeout(eqAnm,100);
 })();
 
 // EQ sources
@@ -81,12 +114,6 @@ setInterval(function(){
   x.send()
 },100);
 
-// Helpers
-function e(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
-function fm(g){return g>=1000?(g/1024).toFixed(1)+' TB':g.toFixed(1)+' GiB'}
-function br(p,w){w=w||18;var f=Math.round(p/100*w),c=p>80?'#ff5555':p>60?'#f1fa8c':'#50fa7b';return'<span style="color:'+c+'">'+'█'.repeat(f)+'</span><span style="color:#333">'+'█'.repeat(w-f)+'</span>'}
-function ft(s){s=isNaN(s)?0:Math.max(0,Math.round(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
-
 function load(){
   var x=new XMLHttpRequest();x.open('GET','system_info.json',true);x.overrideMimeType('application/json; charset=utf-8');x.timeout=3000;
   x.onload=function(){
@@ -95,17 +122,20 @@ function load(){
       var s=d.system,o=d.os,c=d.cpu,g=d.gpu,m=d.memory,dk=d.disk,nw=d.network,mb=d.motherboard;
       var lines=[];
 
-      if(s)lines.push('<span class="k">user </span><span class="v">'+e(s.username||'?')+'</span><span class="m">@</span><span class="v">'+e(s.hostname||'?')+'</span>');
-      lines.push('<div class="sep-line">'+'─'.repeat(42)+'</div>');
-      if(o)lines.push('<span class="k">os  </span><span class="v">'+e(o.name||'?')+'</span> <span class="m">'+e(o.version||'')+' ('+e(o.architecture||'')+')</span>');
-      if(c)lines.push('<span class="k">cpu </span><span class="v">'+e(c.name||'?')+'</span> <span class="m">'+(c.cores||0)+'C/'+(c.threads||0)+'T @ '+(c.frequency_mhz||0)+'MHz</span>');
-      if(g&&g.length){var gl=g.filter(function(x){return x.indexOf('OrayIdd')===-1});if(!gl.length)gl=g;lines.push('<span class="k">gpu </span><span class="v">'+e(gl[0])+'</span>')}
-      if(m)lines.push('<span class="k">ram </span><span class="v">'+fm(m.used_gb||0)+'</span><span class="m"> / '+fm(m.total_gb||0)+' ('+(m.percent||0).toFixed(0)+'%)</span> <span class="v">'+br(m.percent||0,18)+'</span>');
-      lines.push('<div class="sep-line">'+'─'.repeat(42)+'</div>');
-      if(dk)Object.keys(dk).forEach(function(l){var dd=dk[l];lines.push('<span class="k">disk</span><span class="v"> '+e(l.replace(':',''))+'</span> <span class="m">'+fm(dd.used_gb||0)+' / '+fm(dd.total_gb||0)+' ('+(dd.percent||0).toFixed(0)+'%)</span> <span class="v">'+br(dd.percent||0,18)+'</span>')});
-      if(nw&&nw.ipv4)lines.push('<span class="k">net </span><span class="v">'+e(nw.ipv4)+'</span><span class="m"> ('+e(nw.interface||'')+')</span>');
-      if(mb)lines.push('<span class="k">mb  </span><span class="m">'+e(mb)+'</span>');
-      lines.push('<br>');
+      // System info
+      if(s)lines.push('<span class="k">user  </span><span class="v">'+e(s.username||'?')+'</span><span class="m"> @ </span><span class="v">'+e(s.hostname||'?')+'</span>');
+      lines.push('<div class="sep">'+'─'.repeat(48)+'</div>');
+      if(o)lines.push('<span class="k">os   </span><span class="v">'+e(o.name||'?')+'</span> <span class="m">'+e(o.version||'')+' ('+e(o.architecture||'')+')</span>');
+      if(c)lines.push('<span class="k">cpu  </span><span class="v">'+e(c.name||'?')+'</span> <span class="m">'+(c.cores||0)+'C/'+(c.threads||0)+'T @ '+(c.frequency_mhz||0)+'MHz</span>');
+      if(g&&g.length){var gl=g.filter(function(x){return x.indexOf('OrayIdd')===-1});if(!gl.length)gl=g;lines.push('<span class="k">gpu  </span><span class="v">'+e(gl[0])+'</span>')}
+      if(m)lines.push('<span class="k">ram  </span><span class="v">'+fm(m.used_gb||0)+'</span><span class="m"> / '+fm(m.total_gb||0)+' ('+(m.percent||0).toFixed(0)+'%)</span> '+pg(m.percent||0,28));
+      lines.push('<div class="sep">'+'─'.repeat(48)+'</div>');
+      if(dk)Object.keys(dk).forEach(function(l){var dd=dk[l];lines.push('<span class="k">disk </span><span class="v">'+e(l.replace(':',''))+'</span> <span class="m"> '+fm(dd.used_gb||0)+' / '+fm(dd.total_gb||0)+' ('+(dd.percent||0).toFixed(0)+'%)</span> '+pg(dd.percent||0,28))});
+      if(nw&&nw.ipv4)lines.push('<span class="k">net  </span><span class="v">'+e(nw.ipv4)+'</span><span class="m"> ('+e(nw.interface||'')+')</span>');
+      if(mb)lines.push('<span class="k">mb   </span><span class="m">'+e(mb)+'</span>');
+
+      var html='<div>'+lines.join('</div><div>')+'</div>';
+      if(S._lastSys!==html){S._lastSys=html;document.getElementById('sys').innerHTML=html}
 
       // Now playing
       var np=d.now_playing||{};
@@ -114,18 +144,25 @@ function load(){
         if(title.length>120||artist.length>120||title.indexOf('http')>=0){
           S.npTitle=null;S._artRetries=0;S._artLoaded=false;
           document.getElementById('art').style.display='none';document.getElementById('artph').style.display='';
-          lines.push('<span class="k">np  </span><span class="np-none">No media</span>');
+          document.getElementById('npprog').innerHTML='';
+          document.getElementById('nptitle').textContent='No media playing';
+          document.getElementById('npartist').textContent='';
+          document.getElementById('npalbum').textContent='';
         }else{
           var sp=np.position_seconds, sd=np.duration_seconds;
           if(S.npTitle!==title){S.npTitle=title;S._artRetries=6;S._artLoaded=false;document.getElementById('art').style.display='none';document.getElementById('artph').style.display=''}
           if(sp>=1){S.npStart=Date.now()-sp*1000;S.npDur=sd||0}
-          var prog='';
-          if(sp>=1&&sd>0){var f=Math.round(sp/sd*18);if(f>18)f=18;prog='<span class="time">'+ft(sp)+'</span> <span style="color:#50fa7b">'+'█'.repeat(f)+'</span><span style="color:#222">'+'█'.repeat(18-f)+'</span><span class="time"> '+ft(sd)+'</span>'}
-          else if(sp>=1){prog='<span class="time">'+ft(sp)+'</span>'}
-          lines.push('<span class="k">np  </span>'+prog);
-          var ni='<span class="title">'+e(title)+'</span>  <span class="artist">'+e(artist)+'</span>';
-          if(album)ni+=' <span class="album">['+e(album)+']</span>';
-          lines.push('<span style="margin-left:55px">'+ni+'</span>');
+
+          // Progress
+          var pct=sd>0?Math.min(99.9,sp/sd*100):0;
+          var prog='<span class="time" id="postime">'+ft(sp)+'</span> '+pg(pct,30)+' <span class="time">/ '+ft(sd)+'</span>';
+          var ph=prog;
+          if(S._lastProg!==ph){S._lastProg=ph;document.getElementById('npprog').innerHTML=ph}
+
+          // Title/artist/album
+          if(S._lastTitle!==title){S._lastTitle=title;document.getElementById('nptitle').textContent=title}
+          if(S._lastArtist!==artist){S._lastArtist=artist;document.getElementById('npartist').textContent=artist}
+          if(S._lastAlbum!==album){S._lastAlbum=album;document.getElementById('npalbum').textContent=album?'['+album+']':''}
 
           // Album art
           var art=document.getElementById('art');
@@ -139,23 +176,28 @@ function load(){
         }
       }else{
         S.npTitle=null;S._artRetries=0;S._artLoaded=false;
-        document.getElementById('art').style.display='none';
-        document.getElementById('artph').style.display='';
-        lines.push('<span class="k">np  </span><span class="np-none">No media</span>');
+        S._lastProg='';S._lastTitle='';S._lastArtist='';S._lastAlbum='';
+        document.getElementById('art').style.display='none';document.getElementById('artph').style.display='';
+        if(S._lastNpState!=='none'){S._lastNpState='none';
+          document.getElementById('npprog').innerHTML='';
+          document.getElementById('nptitle').textContent='No media playing';
+          document.getElementById('npartist').textContent='';
+          document.getElementById('npalbum').textContent='';
+        }
       }
 
-      // Update only #info, never touches #eqbars
-      var html='<div>'+lines.join('</div><div>')+'</div>';
-      if(S._lastInfo!==html){S._lastInfo=html;document.getElementById('info').innerHTML=html}
+      // Audio EQ fallback
+      if(!_weHasAudio&&d.audio){S.eqB=d.audio.eq_bass||0;S.eqM=d.audio.eq_mid||0;S.eqT=d.audio.eq_treble||0}
 
       // Update time
       var n=new Date();
-      document.getElementById('u').textContent='updated '+String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+':'+String(n.getSeconds()).padStart(2,'0');
+      document.getElementById('u').textContent='['+n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0')+' '+String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+':'+String(n.getSeconds()).padStart(2,'0')+']';
     }catch(e){}
   };
   x.send();
 }
 load();setInterval(load,R);
-setInterval(function(){if(!S.npTitle)return;var p=document.querySelector('#info .time');if(p)p.textContent=ft((Date.now()-S.npStart)/1000)},500);
+// Position ticker
+setInterval(function(){if(!S.npTitle)return;var p=document.getElementById('postime');if(p)p.textContent=ft((Date.now()-S.npStart)/1000)},500);
 })();</script>
 </body></html>
