@@ -29,9 +29,9 @@ body{display:flex;align-items:center;justify-content:center}
 .mini-cal .cal-week{color:var(--muted)}
 .mini-cal .cal-today{color:var(--blue);font-weight:700}
 .main-grid{display:flex;gap:clamp(24px,3vw,48px);margin-bottom:16px;align-items:flex-start}
-.left-panel{width:220px;min-width:220px;display:flex;flex-direction:column;align-items:flex-start}
-.ascii-logo{color:var(--blue);font-weight:700;line-height:1.05;letter-spacing:0;margin:0;white-space:pre;font-size:clamp(14px,1.15vw,18px);text-shadow:0 0 8px rgba(97,175,239,.15)}
-.meta-badges{margin-top:14px;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.left-panel{flex:0 0 160px;width:160px;min-width:160px;max-width:160px;display:flex;flex-direction:column;align-items:flex-start}
+.ascii-logo{color:var(--blue);font-weight:700;line-height:0.92;letter-spacing:-1px;margin:0 0 12px 0;white-space:pre;font-size:0.78em;width:160px;max-width:160px;overflow:hidden;text-shadow:0 0 8px rgba(97,175,239,.15)}
+.meta-badges{margin-top:10px;display:flex;flex-direction:column;gap:6px;align-items:flex-start;max-width:160px}
 .badge{display:inline-block;padding:2px 8px;border:1px solid var(--muted);border-radius:3px;font-size:0.68em;line-height:1.2;letter-spacing:0.02em;white-space:nowrap;background:rgba(0,0,0,0.12)}
 .badge-blue{color:var(--blue);border-color:rgba(97,175,239,.45)}
 .badge-green{color:var(--green);border-color:rgba(152,195,121,.45)}
@@ -80,15 +80,13 @@ body{display:flex;align-items:center;justify-content:center}
 <div class="main-grid">
 <div class="left-panel">
 <pre class="ascii-logo" id="asciiLogo">
-▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄
-████████  ████████
-████████  ████████
-▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀
+██████  ██████
+██████  ██████
+██████  ██████
 
-▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄
-████████  ████████
-████████  ████████
-▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀
+██████  ██████
+██████  ██████
+██████  ██████
 </pre>
 <div id="statusbadges" class="meta-badges"></div>
 </div>
