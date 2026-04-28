@@ -17,7 +17,17 @@
       "Bash(cscript //Nologo start_service.vbs sleep 8 tasklist)",
       "Bash(grep -E \"smtc_service|art_extractor\" echo \"---\" ls \"F:\\\\1123\\\\cmdwallpaper\\\\art_extractor.log\")",
       "Bash(cscript //Nologo start_service.vbs)",
-      "Bash(tasklist)"
+      "Bash(tasklist)",
+      "Bash(sed -i '44a <div class=\"eq-line\"><span class=\"k\">eq  </span><span id=\"eqbars\"></span></div>' \"F:\\\\1123\\\\cmdwallpaper\\\\wallpaper.html\")",
+      "Bash(sed -n '43,47p' \"F:\\\\1123\\\\cmdwallpaper\\\\wallpaper.html\")",
+      "Bash(sed -i '43s/.*/\\\\t<div class=\"right\" id=\"right\">\\\\n\\\\t  <div id=\"right-info\"><\\\\/div>\\\\n\\\\t  <div class=\"eq-line\"><span class=\"k\">eq  <\\\\/span><span id=\"eqbars\"><\\\\/span><\\\\/div>\\\\n\\\\t<\\\\/div>/' wallpaper.html)",
+      "Bash(sed -i '45,46d' wallpaper.html)",
+      "Bash(sed -n '42,50p' wallpaper.html)",
+      "Bash(du -sh . --exclude=.git --exclude=.claude)",
+      "Bash(ls -lhS *.html *.cs *.dll *.exe *.json *.ps1 *.vbs)",
+      "Bash(du -sh music_ref)",
+      "Bash(taskkill /f /im background_service.exe)",
+      "Read(//f/1123/cmdwallpaper/**)"
     ]
   }
 }

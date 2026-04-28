@@ -3,30 +3,21 @@
 html,body{width:100%;height:100%;background:transparent;overflow:hidden;font-family:"Segoe UI","Microsoft YaHei","微软雅黑","Consolas","PingFang SC","Noto Sans SC","SimHei",monospace,sans-serif;font-size:15px}
 body{display:flex;align-items:center;justify-content:center;color:#ccc}
 .t{background:rgba(12,12,16,0.94);border:1px solid #2a2a2a;border-radius:10px;padding:24px 32px 20px 32px;min-width:980px;max-width:1200px;box-shadow:0 4px 40px rgba(0,0,0,0.7),inset 0 1px 0 rgba(255,255,255,0.03)}
-/* Title bar */
 .tb{color:#555;font-size:13px;margin-bottom:14px;display:flex;align-items:center;gap:10px;white-space:nowrap;padding-bottom:8px;border-bottom:1px solid #1e1e1e}
-.tb .dot-r{color:#ff5f56}.tb .dot-y{color:#ffbd2e}.tb .dot-g{color:#27c93f}
-.tb .userhost{color:#00ff88}.tb .sep{color:#3a3a3a}
-/* Side-by-side body */
+.dot-r{color:#ff5f56}.dot-y{color:#ffbd2e}.dot-g{color:#27c93f}
+.userhost{color:#00ff88}.sep{color:#3a3a3a}
 .body{display:flex;gap:28px}
-/* Left column */
 .left{flex-shrink:0;width:180px;display:flex;flex-direction:column;align-items:center;gap:6px}
 .art-box{width:180px;height:180px;border:1px solid #2a2a2a;border-radius:6px;overflow:hidden;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center}
 .art-box img{width:100%;height:100%;object-fit:cover;display:none}
 .art-placeholder{color:#333;font-size:12px;text-align:center;line-height:1.6}
-.art-label{color:#555;font-size:11px;text-transform:uppercase;letter-spacing:1px}
-/* Right panel */
 .right{flex:1;min-width:0;color:#ccc;line-height:1.8}
-.right .k{color:#00ff88}.right .v{color:#ddd}.right .m{color:#888;font-size:13px}
-.right .sep-line{color:#333;font-size:13px;margin:2px 0}
-.right .np-none{color:#555;font-size:14px;font-style:italic}
-.right .title{color:#fff;font-size:15px}
-.right .artist{color:#00ccff;font-size:14px}
-.right .album{color:#777;font-size:13px}
-.right .time{color:#888;font-size:13px}
-/* EQ bar colors */
+.k{color:#00ff88}.v{color:#ddd}.m{color:#888;font-size:13px}
+.sep-line{color:#333;font-size:13px;margin:2px 0}
+.np-none{color:#555;font-size:14px;font-style:italic}
+.title{color:#fff;font-size:15px}.artist{color:#00ccff;font-size:14px}.album{color:#777;font-size:13px}
+.time{color:#888;font-size:13px}
 .eq-b{color:#ff5555}.eq-m{color:#f1fa8c}.eq-t{color:#50fa7b}.eq-s{color:#222}
-/* Footer */
 #u{color:#444;font-size:11px;text-align:right;margin-top:8px;border-top:1px solid #1e1e1e;padding-top:6px}
 </style></head><body>
 <div class="t">
@@ -38,9 +29,11 @@ body{display:flex;align-items:center;justify-content:center;color:#ccc}
 <div class="body">
 <div class="left">
 <div class="art-box"><img id="art" style="display:none"><div class="art-placeholder" id="artph"><span style="font-size:32px;color:#444">♪</span><br>no album<br>art</div></div>
-<div class="art-label" id="artlabel"></div>
 </div>
-<div class="right" id="right"></div>
+<div class="right">
+<div id="info"></div>
+<div id="eqbars"></div>
+</div>
 </div>
 <div id="u"></div>
 </div>
@@ -59,24 +52,19 @@ var R=500,S={npTitle:null,npStart:0,npDur:0,vol:50,sm:{b:0,m:0,t:0}};
   setTimeout(tck,1000);
 })();
 
-// EQ bars animation (throttled to ~10fps)
+// EQ animation (throttled to ~10fps, never touches #info DOM)
 var _lastEQ='';
 (function anm(){
-  var last=arguments.callee._t||0, now=Date.now();
-  if(now-last<100){requestAnimationFrame(anm);return}
-  arguments.callee._t=now;
-  var sm=S.sm;
-  var b=S.eqB||0,m=S.eqM||0,t=S.eqT||0;
+  var t=Date.now();
+  if(t-(anm._ts||0)<100){requestAnimationFrame(anm);return}
+  anm._ts=t;
+  var sm=S.sm,b=S.eqB||0,m=S.eqM||0,t=S.eqT||0;
   sm.b+=(b-sm.b)*0.4;sm.m+=(m-sm.m)*0.4;sm.t+=(t-sm.t)*0.4;
   var bf=Math.round(sm.b/5),mf=Math.round(sm.m/5),tf=Math.round(sm.t/5);
-  var html='<span class="eq-b">'+'█'.repeat(bf)+'</span><span class="eq-s">'+'█'.repeat(20-bf)+'</span> BASS  '+
+  var h='<span class="eq-b">'+'█'.repeat(bf)+'</span><span class="eq-s">'+'█'.repeat(20-bf)+'</span> BASS  '+
     '<span class="eq-m">'+'█'.repeat(mf)+'</span><span class="eq-s">'+'█'.repeat(20-mf)+'</span> MID  '+
     '<span class="eq-t">'+'█'.repeat(tf)+'</span><span class="eq-s">'+'█'.repeat(20-tf)+'</span> TREB';
-  if(html!==_lastEQ){
-    _lastEQ=html;
-    var eqEl=document.getElementById('eqbars');
-    if(eqEl)eqEl.innerHTML=html;
-  }
+  if(h!==_lastEQ){_lastEQ=h;document.getElementById('eqbars').innerHTML=h}
   requestAnimationFrame(anm);
 })();
 
@@ -131,17 +119,13 @@ function load(){
           var sp=np.position_seconds, sd=np.duration_seconds;
           if(S.npTitle!==title){S.npTitle=title;S._artRetries=6;S._artLoaded=false;document.getElementById('art').style.display='none';document.getElementById('artph').style.display=''}
           if(sp>=1){S.npStart=Date.now()-sp*1000;S.npDur=sd||0}
-
           var prog='';
-          if(sp>=1&&sd>0){
-            var f=Math.round(sp/sd*18);if(f>18)f=18;
-            prog='<span class="time">'+ft(sp)+'</span> <span style="color:#50fa7b">'+'█'.repeat(f)+'</span><span style="color:#222">'+'█'.repeat(18-f)+'</span><span class="time"> '+ft(sd)+'</span>';
-          }else if(sp>=1){prog='<span class="time">'+ft(sp)+'</span>'}
+          if(sp>=1&&sd>0){var f=Math.round(sp/sd*18);if(f>18)f=18;prog='<span class="time">'+ft(sp)+'</span> <span style="color:#50fa7b">'+'█'.repeat(f)+'</span><span style="color:#222">'+'█'.repeat(18-f)+'</span><span class="time"> '+ft(sd)+'</span>'}
+          else if(sp>=1){prog='<span class="time">'+ft(sp)+'</span>'}
           lines.push('<span class="k">np  </span>'+prog);
-
-          var npInfo='<span class="title">'+e(title)+'</span>  <span class="artist">'+e(artist)+'</span>';
-          if(album)npInfo+=' <span class="album">['+e(album)+']</span>';
-          lines.push('<span style="margin-left:55px">'+npInfo+'</span>');
+          var ni='<span class="title">'+e(title)+'</span>  <span class="artist">'+e(artist)+'</span>';
+          if(album)ni+=' <span class="album">['+e(album)+']</span>';
+          lines.push('<span style="margin-left:55px">'+ni+'</span>');
 
           // Album art
           var art=document.getElementById('art');
@@ -159,14 +143,10 @@ function load(){
         document.getElementById('artph').style.display='';
         lines.push('<span class="k">np  </span><span class="np-none">No media</span>');
       }
-      lines.push('<br>');
 
-      // EQ
-      lines.push('<span class="k">eq  </span><span id="eqbars"></span>');
-
-      // Render right panel
+      // Update only #info, never touches #eqbars
       var html='<div>'+lines.join('</div><div>')+'</div>';
-      if(S._lastRight!==html){S._lastRight=html;document.getElementById('right').innerHTML=html}
+      if(S._lastInfo!==html){S._lastInfo=html;document.getElementById('info').innerHTML=html}
 
       // Update time
       var n=new Date();
@@ -176,7 +156,6 @@ function load(){
   x.send();
 }
 load();setInterval(load,R);
-// Position ticker
-setInterval(function(){if(!S.npTitle)return;var p=document.querySelector('#right .time');if(p)p.textContent=ft((Date.now()-S.npStart)/1000)},500);
+setInterval(function(){if(!S.npTitle)return;var p=document.querySelector('#info .time');if(p)p.textContent=ft((Date.now()-S.npStart)/1000)},500);
 })();</script>
 </body></html>

@@ -14,34 +14,34 @@
                 "cores":  8
             },
     "now_playing":  {
-                        "album_title":  "Closer",
-                        "duration_seconds":  245,
-                        "position_seconds":  214.9,
-                        "title":  "Closer",
-                        "artist":  "The Chainsmokers/Halsey",
+                        "album_title":  "We Are Young \u0026 Free (Live)",
+                        "duration_seconds":  255,
+                        "position_seconds":  16.7,
+                        "title":  "Wake (Studio)",
+                        "artist":  "Hillsong Young \u0026 Free",
                         "status":  "playing"
                     },
     "disk":  {
                  "F:":  {
-                            "used_gb":  128.79,
+                            "used_gb":  128.52,
                             "total_gb":  150.25,
-                            "percent":  85.7,
+                            "percent":  85.5,
                             "mount":  "F:\\",
-                            "free_gb":  21.46
+                            "free_gb":  21.73
                         },
                  "C:":  {
-                            "used_gb":  400.9,
+                            "used_gb":  400.89,
                             "total_gb":  474.71,
-                            "percent":  84.5,
+                            "percent":  84.4,
                             "mount":  "C:\\",
-                            "free_gb":  73.81
+                            "free_gb":  73.82
                         },
                  "D:":  {
-                            "used_gb":  651.68000000000006,
+                            "used_gb":  651.7,
                             "total_gb":  781.25,
                             "percent":  83.4,
                             "mount":  "D:\\",
-                            "free_gb":  129.57
+                            "free_gb":  129.55
                         }
              },
     "os":  {
@@ -51,12 +51,12 @@
                "build":  "26120"
            },
     "memory":  {
-                   "used_gb":  12.09,
+                   "used_gb":  9.8500000000000014,
                    "total_gb":  31.19,
-                   "percent":  38.8,
-                   "available_gb":  19.1
+                   "percent":  31.6,
+                   "available_gb":  21.34
                },
-    "timestamp":  "2026-04-28T03:40:51.7994314Z",
+    "timestamp":  "2026-04-28T05:17:20.6365911Z",
     "system":  {
                    "username":  "m1586",
                    "hostname":  "WANGKE"

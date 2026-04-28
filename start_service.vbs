@@ -4,25 +4,19 @@ Set objWMIService = GetObject("winmgmts:\\.\root\cimv2")
 
 strDir = objFSO.GetParentFolderName(WScript.ScriptFullName)
 
-' Helper: check if a process is already running
+' Check if background service is already running
 Function IsRunning(procName)
-    Dim colProcesses, objProcess
+    Dim colProcesses
     Set colProcesses = objWMIService.ExecQuery("SELECT * FROM Win32_Process WHERE Name='" & procName & "'")
     IsRunning = (colProcesses.Count > 0)
 End Function
 
-' SMTC service: writes smtc_data.json every second
-If Not IsRunning("smtc_service.exe") Then
-    strSmtc = """" & strDir & "\smtc_service\publish\smtc_service.exe"" """ & strDir & """"
-    objShell.Run strSmtc, 0, False
+' Background service: SMTC reader + album art extractor
+If Not IsRunning("background_service.exe") Then
+    strSvc = """" & strDir & "\background_service.exe"" """ & strDir & """"
+    objShell.Run strSvc, 0, False
 End If
 
-' Album art extractor
-If Not IsRunning("art_extractor.exe") Then
-    strArt = """" & strDir & "\art_extractor\publish\art_extractor.exe"" """ & strDir & """"
-    objShell.Run strArt, 0, False
-End If
-
-' System info updater (always restart to pick up DLL changes)
+' System info updater
 strCmd = "powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File """ & strDir & "\system_info_updater.ps1"" -UpdateInterval 1"
 objShell.Run strCmd, 0, False
