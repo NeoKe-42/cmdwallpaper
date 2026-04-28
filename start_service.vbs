@@ -1,22 +1,26 @@
 Set objShell = CreateObject("WScript.Shell")
 Set objFSO = CreateObject("Scripting.FileSystemObject")
-Set objWMIService = GetObject("winmgmts:\\.\root\cimv2")
 
 strDir = objFSO.GetParentFolderName(WScript.ScriptFullName)
 
-' Check if background service is already running
-Function IsRunning(procName)
-    Dim colProcesses
-    Set colProcesses = objWMIService.ExecQuery("SELECT * FROM Win32_Process WHERE Name='" & procName & "'")
-    IsRunning = (colProcesses.Count > 0)
-End Function
-
-' Background service: SMTC reader + album art extractor
-If Not IsRunning("background_service.exe") Then
-    strSvc = """" & strDir & "\background_service.exe"" """ & strDir & """"
-    objShell.Run strSvc, 0, False
+' Check PID file: only start if this directory isn't already running
+strPidFile = strDir & "\cmdwallpaper.pid"
+If objFSO.FileExists(strPidFile) Then
+    ' PID file exists — agent may already be running for this dir
+    On Error Resume Next
+    Dim pid, proc
+    pid = CLng(objFSO.OpenTextFile(strPidFile, 1).ReadAll())
+    Set proc = GetObject("winmgmts:root/cimv2:Win32_Process.Handle='" & pid & "'")
+    If Err.Number = 0 Then
+        ' Process exists — check it's from this directory
+        If InStr(1, proc.ExecutablePath, strDir, 1) > 0 Then
+            ' Already running from this directory, nothing to do
+            WScript.Quit 0
+        End If
+    End If
+    On Error Goto 0
 End If
 
-' System info updater
-strCmd = "powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File """ & strDir & "\system_info_updater.ps1"" -UpdateInterval 1"
-objShell.Run strCmd, 0, False
+' Start the agent
+strAgent = """" & strDir & "\publish\cmdwallpaper_agent.exe"" """ & strDir & """"
+objShell.Run strAgent, 0, False

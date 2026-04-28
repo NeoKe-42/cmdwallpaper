@@ -1,22 +1,23 @@
-﻿# Wallpaper Engine - System Info Terminal Wallpaper install
+# Wallpaper Engine - cmdwallpaper install
 # Run once, then forget. Service auto-starts on every login.
 
-$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$scriptDir = $PSScriptRoot
+if (-not $scriptDir) { $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path }
 
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "  System Info Terminal Wallpaper" -ForegroundColor Cyan
+Write-Host "  cmdwallpaper v0.2.0-local" -ForegroundColor Cyan
 Write-Host "  One-time install" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
-# 1. Generate initial system info
-Write-Host "[1/3] Generating system info..." -ForegroundColor Yellow
-try {
-    & (Join-Path $scriptDir "get_system_info.ps1") -OutputFile (Join-Path $scriptDir "system_info.json")
-    Write-Host "  OK - system_info.json created" -ForegroundColor Green
-} catch {
-    Write-Host "  ERROR: $_" -ForegroundColor Red
-    exit 1
+# 1. Create runtime directories
+Write-Host "[1/3] Creating runtime directories..." -ForegroundColor Yellow
+$dataDir = Join-Path $scriptDir "data"
+if (-not (Test-Path $dataDir)) {
+    New-Item -ItemType Directory -Path $dataDir -Force | Out-Null
+    Write-Host "  OK - data/ created" -ForegroundColor Green
+} else {
+    Write-Host "  OK - data/ exists" -ForegroundColor Green
 }
 
 # 2. Add to Windows Startup folder
@@ -52,5 +53,5 @@ Write-Host "Next step:" -ForegroundColor White
 Write-Host "  Wallpaper Engine -> Open from File ->" -ForegroundColor White
 Write-Host "  $scriptDir\project.json" -ForegroundColor Yellow
 Write-Host ""
-Write-Host "System info updates every 5 seconds." -ForegroundColor Gray
+Write-Host "Runtime data written to data/" -ForegroundColor Gray
 Write-Host "Service auto-starts when you log into Windows." -ForegroundColor Gray
