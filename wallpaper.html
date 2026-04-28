@@ -77,27 +77,65 @@ function e(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replac
 function fm(g){return g>=1000?(g/1024).toFixed(1)+' TB':g.toFixed(1)+' GiB'}
 function ft(s){s=isNaN(s)?0:Math.max(0,Math.round(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
 
-// EQ: Wallpaper Engine native audio listener
-// Use left channel only (0..N/2-1), split bass/mid/treble
-S._eqFrames=-1; // -1=API not found, 0=found but no callbacks, >0=working
-if(typeof window.wallpaperRegisterAudioListener==='function'){
-  S._eqFrames=0;
-  try{window.wallpaperRegisterAudioListener(function(L){
-    if(!L||!L.length)return;
-    var n=Math.floor(L.length/2),ba=0,ma=0,ta=0,bc=0,mc=0,tc=0;
-    for(var i=0;i<n;i++){
-      if(i<Math.floor(n*0.12)){ba+=L[i];bc++}
-      else if(i<Math.floor(n*0.5)){ma+=L[i];mc++}
-      else{ta+=L[i];tc++}
-    }
-    S.eqB=bc>0?Math.min(100,(ba/bc)*100):0;
-    S.eqM=mc>0?Math.min(100,(ma/mc)*100):0;
-    S.eqT=tc>0?Math.min(100,(ta/tc)*100):0;
-    S._eqFrames++;
-  })}catch(e){S._eqErr='reg:'+e.message}
+// ── EQ: Wallpaper Engine native audio listener ───────────
+// audioArray[0..63]=left, [64..127]=right; merge L+R, split bass/mid/treble
+var _weHasAudio = false;
+var _weLastAudio = 0;
+var _eqDebug = { registered: false, frames: 0, lastLength: 0, lastError: '' };
+
+function updateEqFromWallpaperAudio(audioArray) {
+  if (!audioArray || audioArray.length < 128) return;
+  var bass = 0, mid = 0, treb = 0;
+  var bc = 0, mc = 0, tc = 0;
+  for (var i = 0; i < 64; i++) {
+    var left = Math.min(Number(audioArray[i]) || 0, 1);
+    var right = Math.min(Number(audioArray[i + 64]) || 0, 1);
+    var v = (left + right) / 2;
+    if (i < 8)       { bass += v; bc++; }
+    else if (i < 32) { mid  += v; mc++; }
+    else             { treb += v; tc++; }
+  }
+  S.eqB = Math.min(100, (bass / Math.max(1, bc)) * 180);
+  S.eqM = Math.min(100, (mid  / Math.max(1, mc)) * 220);
+  S.eqT = Math.min(100, (treb / Math.max(1, tc)) * 260);
+  _weHasAudio = true;
+  _weLastAudio = Date.now();
+  _eqDebug.frames++;
+  _eqDebug.lastLength = audioArray.length;
 }
 
-// EQ animation (every 100ms)
+try {
+  if (typeof window.wallpaperRegisterAudioListener === 'function') {
+    window.wallpaperRegisterAudioListener(updateEqFromWallpaperAudio);
+    _eqDebug.registered = true;
+  } else {
+    _eqDebug.lastError = 'wallpaperRegisterAudioListener not available';
+  }
+} catch (err) {
+  _eqDebug.lastError = String(err && err.message ? err.message : err);
+}
+
+// Fallback: eq_data.json only when WE audio is unavailable
+setInterval(function () {
+  if (_weHasAudio && Date.now() - _weLastAudio < 3000) return;
+  _weHasAudio = false;
+  var x = new XMLHttpRequest();
+  x.open('GET', 'eq_data.json?cb=' + Date.now(), true);
+  x.timeout = 300;
+  x.onload = function () {
+    try {
+      var d = JSON.parse(x.responseText || '{}');
+      S.eqB = Number(d.b) || 0;
+      S.eqM = Number(d.m) || 0;
+      S.eqT = Number(d.t) || 0;
+    } catch (e) {}
+  };
+  x.onerror = function () {};
+  x.ontimeout = function () {};
+  x.send();
+}, 500);
+
+// ── EQ animation (every 100ms) ───────────────────────────
 (function eqAnm(){
   var w=28;
   var sm=S.sm,b=S.eqB||0,m=S.eqM||0,t=S.eqT||0;
@@ -215,12 +253,9 @@ setInterval(function(){
 // Update time footer (every 1s, includes EQ debug)
 setInterval(function(){
   var n=new Date();
-  var b=S.eqB||0,m=S.eqM||0,t=S.eqT||0;
-  var eqDbg='frm:'+S._eqFrames;
-  if(S._eqErr)eqDbg='ERR:'+S._eqErr;
-  else if(S._eqFrames===-1)eqDbg='API:NO'; else if(S._eqFrames===0)eqDbg='API:OK frm:0';
-  else eqDbg='frm:'+S._eqFrames+' B:'+b.toFixed(0)+' M:'+m.toFixed(0)+' T:'+t.toFixed(0);
-  document.getElementById('u').innerHTML='<span style="color:#666">[EQ '+eqDbg+']</span> ['+n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0')+' '+String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+':'+String(n.getSeconds()).padStart(2,'0')+']';
+  var ts=n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0')+' '+String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+':'+String(n.getSeconds()).padStart(2,'0');
+  var eqState=_weHasAudio?'WE-AUDIO frames='+_eqDebug.frames+' len='+_eqDebug.lastLength:('EQ-FALLBACK ')+(_eqDebug.registered?'registered':'not-registered');
+  document.getElementById('u').innerHTML='<span style="color:#666">['+ts+'] ['+eqState+']</span>';
 },1000);
 })();</script>
 </body></html>

@@ -2,5 +2,6 @@
     "title": "System Info Terminal",
     "type": "web",
     "file": "wallpaper.html",
-    "visibility": 0
+    "visibility": 0,
+    "supportsaudioprocessing": true
 }
