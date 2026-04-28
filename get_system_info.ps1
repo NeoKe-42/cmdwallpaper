@@ -44,34 +44,27 @@ try {
         $info["audio"]=@{ "volume"=$vol; "muted"=$muted; "eq_bass"=[math]::Round([MediaHelper]::GetEQBass(),1); "eq_mid"=[math]::Round([MediaHelper]::GetEQMid(),1); "eq_treble"=[math]::Round([MediaHelper]::GetEQTreble(),1) }
     } catch {}
 
-    # Now playing: try SMTC first (real position/duration/art), fallback to window title
+    # Now playing - read from SMTC background EXE (always fresh, no cold start)
     $np = @{ "status"="no_media" }
-    $smtcExe = Join-Path $scriptDir "smtc_reader.exe"
-    if (Test-Path $smtcExe) {
-        try {
-            $smtcJson = & $smtcExe $scriptDir 2>$null | Out-String
-            $smtc = $smtcJson | ConvertFrom-Json
-            if ($smtc.status -eq "playing") {
+    $smtcFile = Join-Path $scriptDir "smtc_data.json"
+    try {
+        if (Test-Path $smtcFile) {
+            $smtc = Get-Content $smtcFile -Raw -Encoding UTF8 | ConvertFrom-Json
+            if ($smtc.status -eq "playing" -and $smtc.title) {
                 $np["status"] = "playing"
-                if ($smtc.title)  { $np["title"] = $smtc.title }
+                $np["title"] = $smtc.title
                 if ($smtc.artist) { $np["artist"] = $smtc.artist }
                 if ($smtc.album)  { $np["album_title"] = $smtc.album }
-                if ($smtc.position_sec) { $np["position_seconds"] = [double]$smtc.position_sec }
-                if ($smtc.duration_sec) { $np["duration_seconds"] = [double]$smtc.duration_sec }
-                if ($smtc.art_file) { $np["album_art_file"] = $smtc.art_file }
+                if ($smtc.pos -gt 0) { $np["position_seconds"] = [double]$smtc.pos }
+                if ($smtc.dur -gt 0)  { $np["duration_seconds"] = [double]$smtc.dur }
             }
-        } catch {}
-    }
+        }
+    } catch {}
+    # Fallback to window titles
     if ($np["status"] -ne "playing") {
         $title=$null; $artist=$null; $album=$null
         $src = [MediaHelper]::GetNowPlaying([ref]$title, [ref]$artist, [ref]$album)
-        if ($src) {
-            $np["status"] = "playing"
-            if ($title)  { $np["title"] = $title }
-            if ($artist) { $np["artist"] = $artist }
-            if ($album)  { $np["album_title"] = $album }
-            $np["source"] = $src
-        }
+        if ($src) { $np = @{ "status"="playing"; "title"=$title; "artist"=$artist; "album_title"=$album; "source"=$src } }
     }
     $info["now_playing"] = $np
 

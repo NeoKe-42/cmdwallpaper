@@ -14,41 +14,34 @@
                 "cores":  8
             },
     "now_playing":  {
-                        "album_title":  "All Falls Down",
-                        "duration_seconds":  199.1,
-                        "position_seconds":  73.8,
-                        "title":  "All Falls Down",
-                        "artist":  "Alan Walker/Noah Cyrus/Digital Farm Animals/Juliander",
+                        "album_title":  "新生 - 英雄联盟十周年神凰行者皮肤主题曲",
+                        "duration_seconds":  189.1,
+                        "position_seconds":  13.1,
+                        "title":  "Rebirth",
+                        "artist":  "英雄联盟",
                         "status":  "playing"
                     },
     "disk":  {
                  "F:":  {
-                            "used_gb":  128.4,
+                            "used_gb":  128.2,
                             "total_gb":  150.25,
-                            "percent":  85.5,
+                            "percent":  85.3,
                             "mount":  "F:\\",
-                            "free_gb":  21.85
+                            "free_gb":  22.05
                         },
                  "C:":  {
-                            "used_gb":  400.69,
+                            "used_gb":  399.5,
                             "total_gb":  474.71,
-                            "percent":  84.4,
+                            "percent":  84.2,
                             "mount":  "C:\\",
-                            "free_gb":  74.02
-                        },
-                 "J:":  {
-                            "used_gb":  77.759999999999991,
-                            "total_gb":  119.02,
-                            "percent":  65.3,
-                            "mount":  "J:\\",
-                            "free_gb":  41.26
+                            "free_gb":  75.21
                         },
                  "D:":  {
-                            "used_gb":  651.56,
+                            "used_gb":  651.65,
                             "total_gb":  781.25,
                             "percent":  83.4,
                             "mount":  "D:\\",
-                            "free_gb":  129.69
+                            "free_gb":  129.6
                         }
              },
     "os":  {
@@ -58,12 +51,12 @@
                "build":  "26120"
            },
     "memory":  {
-                   "used_gb":  12.540000000000003,
+                   "used_gb":  11.190000000000001,
                    "total_gb":  31.19,
-                   "percent":  40.2,
-                   "available_gb":  18.65
+                   "percent":  35.9,
+                   "available_gb":  20
                },
-    "timestamp":  "2026-04-27T13:52:47.2713898Z",
+    "timestamp":  "2026-04-28T00:57:08.1882714Z",
     "system":  {
                    "username":  "m1586",
                    "hostname":  "WANGKE"

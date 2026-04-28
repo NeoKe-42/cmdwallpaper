@@ -17,7 +17,7 @@ html,body{width:100%;height:100%;background:transparent;font-family:"Consolas","
 </div>
 <script>
 (function(){
-var R=500,S={npTitle:null,npStart:0,vol:50,sm:{b:0,m:0,t:0}};
+var R=500,S={npTitle:null,npStart:0,npDur:0,vol:50,sm:{b:0,m:0,t:0}};
 
 // Clock
 (function tck(){
@@ -43,22 +43,25 @@ var R=500,S={npTitle:null,npStart:0,vol:50,sm:{b:0,m:0,t:0}};
   requestAnimationFrame(anm);
 })();
 
-// Fast poll eq_data.json from DLL audio meter (every 100ms)
+// EQ: prefer Wallpaper Engine native listener, fall back to DLL meter
+var _weHasAudio=false,_weLastAudio=0;
+if(typeof window.wallpaperRegisterAudioListener==='function'){
+  try{window.wallpaperRegisterAudioListener(function(L){if(!L||!L.length)return;var n=L.length,ba=0,ma=0,ta=0,bc=0,mc=0,tc=0;for(var i=0;i<n;i++){if(i<Math.floor(n*0.08)){ba+=L[i];bc++}else if(i<Math.floor(n*0.35)){ma+=L[i];mc++}else{ta+=L[i];tc++}}S.eqB=Math.min(100,(ba/bc)*100);S.eqM=Math.min(100,(ma/mc)*100);S.eqT=Math.min(100,(ta/tc)*100);_weHasAudio=true;_weLastAudio=Date.now()})}catch(e){}
+}
+// Fast poll eq_data.json from DLL audio meter (every 100ms) — fallback if WE listener has no data
 setInterval(function(){
+  if(_weHasAudio&&Date.now()-_weLastAudio<3000)return;
+  if(Date.now()-_weLastAudio>=3000)_weHasAudio=false;
   var x=new XMLHttpRequest();x.open('GET','eq_data.json',true);x.timeout=200;
   x.onload=function(){try{var d=JSON.parse(x.responseText);S.eqB=d.b||0;S.eqM=d.m||0;S.eqT=d.t||0}catch(e){}}
   x.send()
 },100);
-// Also try Wallpaper Engine native audio listener
-if(typeof window.wallpaperRegisterAudioListener==='function'){
-  try{window.wallpaperRegisterAudioListener(function(L){if(!L||!L.length)return;var n=L.length,ba=0,ma=0,ta=0,bc=0,mc=0,tc=0;for(var i=0;i<n;i++){if(i<Math.floor(n*0.08)){ba+=L[i];bc++}else if(i<Math.floor(n*0.35)){ma+=L[i];mc++}else{ta+=L[i];tc++}}S.eqB=Math.min(100,(ba/bc)*100);S.eqM=Math.min(100,(ma/mc)*100);S.eqT=Math.min(100,(ta/tc)*100)})}catch(e){}
-}
 
 // Helpers
 function e(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 function fm(g){return g>=1000?(g/1024).toFixed(1)+' TB':g.toFixed(1)+' GiB'}
 function br(p,w){w=w||25;var f=Math.round(p/100*w),c=p>80?'#ff5555':p>60?'#f1fa8c':'#50fa7b';return'<span style="color:'+c+'">'+'█'.repeat(f)+'</span><span style="color:#444">'+'█'.repeat(w-f)+'</span>'}
-function ft(s){s=Math.max(0,Math.floor(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
+function ft(s){s=isNaN(s)?0:Math.max(0,Math.round(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
 
 function load(){
   var x=new XMLHttpRequest();x.open('GET','system_info.json',true);x.overrideMimeType('application/json; charset=utf-8');x.timeout=3000;
@@ -81,30 +84,25 @@ function load(){
       var infoStr = r.join('<br>');
       if(S._lastInfo!==infoStr){S._lastInfo=infoStr;document.getElementById('info').innerHTML=infoStr}
 
-      // Audio EQ from JSON
-      if(d.audio){S.eqB=d.audio.eq_bass||0;S.eqM=d.audio.eq_mid||0;S.eqT=d.audio.eq_treble||0;S.vol=d.audio.volume||50}
+      // Audio EQ from JSON (only if WE listener is not active)
+      if(!_weHasAudio&&d.audio){S.eqB=d.audio.eq_bass||0;S.eqM=d.audio.eq_mid||0;S.eqT=d.audio.eq_treble||0;S.vol=d.audio.volume||50}
 
-      // Now playing
+      // Now playing - SMTC provides real position/duration from DLL background thread
       var np=d.now_playing||{},npEl=document.getElementById('np');
       if(np.status==='playing'&&np.title&&np.artist){
         var title=np.title||'',artist=np.artist||'',album=np.album_title||'';
-        if(title.length>120||artist.length>120||title.indexOf('http')>=0){if(S._lastNp!=='no'){S._lastNp='no';npEl.innerHTML='<span class=\"np\">No media</span>'}S.npTitle=null}
+        if(title.length>120||artist.length>120||title.indexOf('http')>=0){S.npTitle=null;npEl.innerHTML='<span class=\"np\">No media</span>'}
         else{
-          var smtcPos=np.position_seconds, smtcDur=np.duration_seconds;
-          if(S.npTitle!==title){S.npTitle=title;S.npStart=smtcPos>0?smtcPos:0;S.npDur=smtcDur||0}
-          var pos,dur=S.npDur||0;
-          if(smtcPos>0) pos=smtcPos;
-          else pos=S.npStart+((Date.now()-S._npTime)/1000);
-          if(!S._npTime||S.npTitle!==title)S._npTime=Date.now();
-
-          var posStr=ft(pos), durStr=dur>0?' / '+ft(dur):'';
-          var barStr='';
-          if(dur>0){var pf=Math.round(Math.min(100,pos/dur*100)/100*18),pe=18-pf;barStr=' <span style=\"color:#50fa7b\">'+'█'.repeat(pf)+'</span><span style=\"color:#333\">'+'█'.repeat(pe)+'</span>'}
-          var npStr='<span class=\"nx\">'+posStr+'</span>'+barStr+durStr+' <span class=\"nt\">'+e(title)+'</span> <span class=\"na\">'+e(artist)+'</span>'+(album?' <span class=\"nal\">['+e(album)+']</span>':'');
-          if(S._lastNp!==npStr){S._lastNp=npStr;npEl.innerHTML=npStr}
+          var sp=np.position_seconds, sd=np.duration_seconds;
+          if(S.npTitle!==title){S.npTitle=title}
+          if(sp>=1){S.npStart=Date.now()-sp*1000;S.npDur=sd||0}
+          var timeStr='';
+          if(sp>=1){timeStr='<span class=\"nx\">'+ft(sp)+'</span>'; if(sd>0){var f=Math.round(sp/sd*18);if(f>18)f=18;timeStr+=' <span style=\"color:#50fa7b\">'+'█'.repeat(f)+'</span><span style=\"color:#333\">'+'█'.repeat(18-f)+'</span> / '+ft(sd)}else{timeStr+=' '}}
+          var ns=timeStr+'<span class=\"nt\">'+e(title)+'</span> <span class=\"na\">'+e(artist)+'</span>'+(album?' <span class=\"nal\">['+e(album)+']</span>':'');
+          if(S._ln!==ns){S._ln=ns;npEl.innerHTML=ns}
         }
       }else{
-        S.npTitle=null;if(S._lastNp!=='no'){S._lastNp='no';npEl.innerHTML='<span class=\"np\">No media</span>'}
+        S.npTitle=null;S._ln='';npEl.innerHTML='<span class=\"np\">No media</span>';
       }
 
       // Update time

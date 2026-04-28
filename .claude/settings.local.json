@@ -4,7 +4,8 @@
       "Bash(powershell -NoProfile -ExecutionPolicy Bypass -File get_system_info.ps1)",
       "Bash(timeout 3 powershell -NoProfile -ExecutionPolicy Bypass -File system_info_updater.ps1)",
       "Bash(powershell *)",
-      "Bash(wscript.exe *)"
+      "Bash(wscript.exe *)",
+      "PowerShell(& \"C:\\\\Windows\\\\Microsoft.NET\\\\Framework64\\\\v4.0.30319\\\\csc.exe\" /target:library /out:\"F:\\\\1123\\\\cmdwallpaper\\\\media_helper.dll\" \"F:\\\\1123\\\\cmdwallpaper\\\\media_helper.cs\" /noconfig /nostdlib /reference:\"C:\\\\Windows\\\\Microsoft.NET\\\\Framework64\\\\v4.0.30319\\\\mscorlib.dll\" /reference:\"C:\\\\Windows\\\\Microsoft.NET\\\\Framework64\\\\v4.0.30319\\\\System.dll\" /reference:\"C:\\\\Windows\\\\Microsoft.NET\\\\Framework64\\\\v4.0.30319\\\\System.Core.dll\")"
     ]
   }
 }
