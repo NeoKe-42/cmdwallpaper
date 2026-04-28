@@ -1,63 +1,62 @@
-# Terminal System Info Wallpaper
+# cmdwallpaper
 
-A Wallpaper Engine web wallpaper that displays real-time system information in a terminal/neofetch style.
-
-![](preview.gif)
-
-## Features
-
-- Terminal aesthetic — dark background, monospace font, ASCII art logo
-- Real-time CPU, GPU, memory, and disk usage with color-coded progress bars
-- OS version, hostname, username, motherboard
-- Auto-refreshes every 5 seconds
-- Auto-starts on Windows login — install once, works forever
-- Zero dependencies — pure PowerShell, runs on Windows 7+
+A Wallpaper Engine web wallpaper with terminal aesthetic — system info, media display, album art, and EQ audio visualizer.
 
 ## Quick Start
 
-### 1. Install
+### Mode 1: Basic (no install required)
 
-Open PowerShell in this folder and run:
+1. Open Wallpaper Engine
+2. Open Wallpaper → Open from File → select `project.json`
+3. Play some music
+
+**Works immediately:**
+- Music title, artist, album
+- Album art (via Wallpaper Engine Media Integration)
+- Playback progress with local interpolation
+- EQ audio visualizer (BASS / MID / TREBLE)
+
+### Mode 2: Full system (run install.ps1 once)
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File install.ps1
+cd F:\1123\cmdwallpaper
+.\install.ps1
 ```
 
-This generates initial system data, registers the background updater to auto-start on login, and launches it immediately.
-
-### 2. Import into Wallpaper Engine
-
-Wallpaper Engine → Open Wallpaper → Open from File → select `project.json`.
-
-Done. The wallpaper updates every 5 seconds, and the background service starts automatically every time you log into Windows.
+**Adds:**
+- CPU, GPU, RAM, Disk usage with color-coded progress bars
+- OS version, hostname, username, motherboard
+- Custom prompt (`C:\Users\<name>>`)
+- System helper auto-starts on Windows login
 
 ## File Structure
 
 | File | Purpose |
 |------|---------|
-| `project.json` | Wallpaper Engine project config |
-| `wallpaper.html` | Terminal-style wallpaper UI |
-| `get_system_info.ps1` | System info collector (one-shot) |
-| `system_info_updater.ps1` | Background update daemon |
-| `start_service.vbs` | Hidden launcher for the daemon |
+| `project.json` | Wallpaper Engine project config (web type + audio) |
+| `wallpaper.html` | Wallpaper UI, EQ, media integration |
+| `cmdwallpaper_agent.cs` | C# system info + SMTC fallback collector |
+| `publish/` | Compiled agent (build with `dotnet publish`) |
+| `start_service.vbs` | Hidden launcher for the agent |
 | `install.ps1` | One-time install + auto-start setup |
-| `system_info.json` | Live data file (auto-generated) |
-| `system_info_loader.lua` | Lua loader (legacy, for scene wallpapers) |
+| `run_agent.ps1` | Debug launcher (runs agent in foreground) |
+| `assets/` | Static assets (placeholder SVG) |
+| `data/` | Runtime data (auto-generated, gitignored) |
 
-## Configuration
-
-Change the update interval:
+## Building the Agent
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File system_info_updater.ps1 -UpdateInterval 10
+dotnet publish cmdwallpaper_agent.csproj -c Release -r win-x64 -o publish
 ```
 
 ## Troubleshooting
 
-**Wallpaper shows no data**: run `powershell -NoProfile -ExecutionPolicy Bypass -File get_system_info.ps1` to make sure `system_info.json` is generated.
+**EQ bars not moving**: make sure `project.json` has `"supportsaudioprocessing": true` and audio is playing.
 
-**Chinese text garbled**: make sure `get_system_info.ps1` is saved as UTF-8 with BOM. Re-run `install.ps1`.
+**System info shows "System helper not installed"**: run `install.ps1` to enable the C# system info agent.
 
 **Service not starting on boot**: check `%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup\WallpaperSystemInfo.bat` exists.
+
+**Chinese text garbled**: save files as UTF-8 with BOM.
 
 **Permission denied**: `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser`

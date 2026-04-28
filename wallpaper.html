@@ -55,9 +55,20 @@ body{display:flex;align-items:center;justify-content:center}
 </div>
 <script>
 (function(){
-var S={npTitle:null,npStart:0,npDur:0,sm:{b:0,m:0,t:0},_artVer:-1,_artShowingPlaceholder:true};
+var S={
+  npTitle:null,npStart:0,npDur:0,sm:{b:0,m:0,t:0},
+  _artVer:-1,_artShowingPlaceholder:true,
+  // WE native media state
+  mediaAvailable:false, mediaEnabled:false,
+  mediaTitle:'', mediaArtist:'', mediaAlbum:'', mediaAlbumArtist:'',
+  mediaThumbnail:'', mediaPrimaryColor:'', mediaTextColor:'',
+  mediaPlaybackState:'stopped',
+  mediaPosition:0, mediaDuration:0, mediaTimelineTs:0,
+  // Fallback
+  _useFallback:false, _smtcHasArt:false, _smtcArtVer:0
+};
 
-// Clock (1s JS local)
+// ── Clock (1s JS local) ──────────────────────────────────
 (function tck(){
   var n=new Date(),h=n.getHours(),m=n.getMinutes(),se=n.getSeconds();
   document.getElementById('td').textContent=String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(se).padStart(2,'0');
@@ -67,7 +78,7 @@ var S={npTitle:null,npStart:0,npDur:0,sm:{b:0,m:0,t:0},_artVer:-1,_artShowingPla
   setTimeout(tck,1000);
 })();
 
-// Progress bar helper
+// ── Helpers ──────────────────────────────────────────────
 function pg(p,w){w=w||30;var f=Math.round(p/100*w);if(f<0)f=0;if(f>w)f=w;
   var c=p>=80?'#ff5555':p>=50?'#f1fa8c':'#50fa7b';
   var e=w-f;
@@ -77,8 +88,55 @@ function e(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replac
 function fm(g){return g>=1000?(g/1024).toFixed(1)+' TB':g.toFixed(1)+' GiB'}
 function ft(s){s=isNaN(s)?0:Math.max(0,Math.round(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
 
+// ── WE Native Media Integration (primary source) ─────────
+// MediaStatusListener
+if(typeof window.wallpaperRegisterMediaStatusListener==='function'){
+  window.wallpaperRegisterMediaStatusListener(function(ev){
+    S.mediaEnabled=!!ev.enabled;
+    S.mediaAvailable=!!ev.enabled;
+  });
+}
+// MediaPropertiesListener
+if(typeof window.wallpaperRegisterMediaPropertiesListener==='function'){
+  window.wallpaperRegisterMediaPropertiesListener(function(ev){
+    S.mediaTitle=ev.title||'';
+    S.mediaArtist=ev.artist||'';
+    S.mediaAlbum=ev.albumTitle||'';
+    S.mediaAlbumArtist=ev.albumArtist||'';
+    S.mediaAvailable=true;
+  });
+}
+// MediaThumbnailListener (base64 PNG)
+if(typeof window.wallpaperRegisterMediaThumbnailListener==='function'){
+  window.wallpaperRegisterMediaThumbnailListener(function(ev){
+    S.mediaThumbnail=ev.thumbnail||'';
+    S.mediaPrimaryColor=ev.primaryColor||'';
+    S.mediaTextColor=ev.textColor||'';
+  });
+}
+// MediaPlaybackListener
+if(typeof window.wallpaperRegisterMediaPlaybackListener==='function'){
+  window.wallpaperRegisterMediaPlaybackListener(function(ev){
+    if(!window.wallpaperMediaIntegration)return;
+    if(ev.state===window.wallpaperMediaIntegration.PLAYBACK_PLAYING)
+      S.mediaPlaybackState='playing';
+    else if(ev.state===window.wallpaperMediaIntegration.PLAYBACK_PAUSED)
+      S.mediaPlaybackState='paused';
+    else
+      S.mediaPlaybackState='stopped';
+  });
+}
+// MediaTimelineListener
+if(typeof window.wallpaperRegisterMediaTimelineListener==='function'){
+  window.wallpaperRegisterMediaTimelineListener(function(ev){
+    S.mediaPosition=Number(ev.position)||0;
+    S.mediaDuration=Number(ev.duration)||0;
+    S.mediaTimelineTs=Date.now();
+    S.mediaAvailable=true;
+  });
+}
+
 // ── EQ: Wallpaper Engine native audio listener ───────────
-// audioArray[0..63]=left, [64..127]=right; merge L+R, split bass/mid/treble
 var _weHasAudio = false;
 var _weLastAudio = 0;
 var _eqDebug = { registered: false, frames: 0, lastLength: 0, lastError: '' };
@@ -146,7 +204,7 @@ setInterval(function () {
   setTimeout(eqAnm,100);
 })();
 
-// System info (from data/system_info.json, every 5s)
+// ── System info (from data/system_info.json, every 5s) ───
 (function loadSys(){
   var x=new XMLHttpRequest();
   x.open('GET','data/system_info.json',true);x.overrideMimeType('application/json; charset=utf-8');x.timeout=5000;
@@ -173,41 +231,114 @@ setInterval(function () {
 
       var html='<div>'+lines.join('</div><div>')+'</div>';
       if(S._lastSys!==html){S._lastSys=html;document.getElementById('sys').innerHTML=html}
-    }catch(e){document.getElementById('sys').innerHTML='<span style="color:#ff5555">ERR: '+e.message+'</span>'}
+    }catch(e){}
   };
-  x.onerror=function(){document.getElementById('sys').innerHTML='<span style="color:#ff5555">ERR: XHR failed ('+x.status+')</span>'};
+  x.onerror=function(){
+    document.getElementById('sys').innerHTML='<span style="color:#888">System helper not installed</span><br><span style="color:#555;font-size:16px">Run install.ps1 to enable system stats</span>';
+  };
   x.send();
   setTimeout(loadSys,5000);
 })();
 
-// Now playing (from data/smtc_data.json, every 1s)
-(function loadNp(){
+// ── Now playing display update (every 500ms) ─────────────
+setInterval(function(){
+  var art=document.getElementById('art');
+  var artph=document.getElementById('artph');
+  var hasMedia=S.mediaEnabled&&S.mediaAvailable&&S.mediaTitle;
+  var state=S.mediaPlaybackState;
+  var pos, dur, title, artist, album;
+
+  if(hasMedia){
+    // ── Primary: WE native media ─────────────────────────
+    title=S.mediaTitle; artist=S.mediaArtist; album=S.mediaAlbum;
+    dur=S.mediaDuration;
+
+    // Local position interpolation
+    if(state==='playing'&&S.mediaDuration>0){
+      pos=Math.min(S.mediaPosition+(Date.now()-S.mediaTimelineTs)/1000, S.mediaDuration);
+    }else{
+      pos=S.mediaPosition;
+    }
+
+    S._useFallback=false;
+
+    // ── Album art: WE thumbnail (base64) ──────────────────
+    if(S.mediaThumbnail){
+      var thumbSrc='data:image/png;base64,'+S.mediaThumbnail;
+      if(S._lastThumbSrc!==thumbSrc){
+        S._lastThumbSrc=thumbSrc; S._artShowingPlaceholder=false;
+        art.src=thumbSrc;
+        (function poll(){
+          if(art.complete){
+            if(art.naturalWidth>0){
+              art.style.display='block'; artph.style.display='none';
+            }else{
+              art.style.display='none'; artph.style.display='';
+              S._artShowingPlaceholder=true;
+            }
+          }else{setTimeout(poll,100)}
+        })();
+      }
+    }else if(!S._artShowingPlaceholder){
+      // No thumbnail from WE — try smtc fallback
+      S._artShowingPlaceholder=true;
+      art.style.display='none'; artph.style.display='';
+    }
+  }else{
+    // ── Fallback: smtc_data.json ─────────────────────────
+    S._useFallback=true;
+    // smtc_data is loaded by separate poller below
+    // Art handled in smtc poller
+  }
+
+  // ── Build display ──────────────────────────────────────
+  if(hasMedia||(!S._useFallback&&S.npTitle)){
+    // Use either WE native or last-known smtc data
+    if(!hasMedia&&S.npTitle){
+      title=S.npTitle; artist=S._lastArtist; album=S._lastAlbum;
+    }
+    if(state==='playing'||(S._useFallback&&S.npTitle)){
+      var pct=dur>0?Math.min(99.9,pos/dur*100):0;
+      var prog='<span class="time" id="postime">'+ft(pos)+'</span> '+pg(pct,30)+' <span class="time">/ '+ft(dur)+'</span>';
+      if(S._lastNpProg!==prog){S._lastNpProg=prog;document.getElementById('npprog').innerHTML=prog}
+      if(S._lastNpTitle!==title){S._lastNpTitle=title;document.getElementById('nptitle').textContent=title}
+      if(S._lastNpArtist!==artist){S._lastNpArtist=artist;document.getElementById('npartist').textContent=artist}
+      var albStr=album?'['+album+']':'';
+      if(S._lastNpAlbum!==albStr){S._lastNpAlbum=albStr;document.getElementById('npalbum').textContent=albStr}
+    }
+  }else if(!S._useFallback){
+    // No media at all
+    if(S._lastNpState!=='none'){S._lastNpState='none';
+      document.getElementById('npprog').innerHTML='<span class="time">--:--</span> no media';
+      document.getElementById('nptitle').textContent='';
+      document.getElementById('npartist').textContent='';
+      document.getElementById('npalbum').textContent='';
+      art.style.display='none'; artph.style.display='';
+      S._artShowingPlaceholder=true;
+    }
+  }
+},500);
+
+// ── smtc_data.json fallback poller (only when WE media unavailable) ──
+(function loadSmtc(){
+  if(!S._useFallback){setTimeout(loadSmtc,2000);return;} // Don't poll when WE native active
   var x=new XMLHttpRequest();
   x.open('GET','data/smtc_data.json',true);x.overrideMimeType('application/json; charset=utf-8');x.timeout=2000;
   x.onload=function(){
     if(x.status!==200&&x.status!==0)return;
     try{var t=x.responseText;if(t.charCodeAt(0)===0xFEFF)t=t.slice(1);var d=JSON.parse(t);
       if(d.status==='playing'&&d.title&&d.artist){
-        var title=d.title||'',artist=d.artist||'',album=d.album||'';
         var sp=d.pos||0, sd=d.dur||0;
-        if(S.npTitle!==title){S.npTitle=title;S._artVer=-1;S._artShowingPlaceholder=false}
-        if(sp>=1){S.npStart=Date.now()-sp*1000;S.npDur=sd||0}
-        var pct=sd>0?Math.min(99.9,sp/sd*100):0;
-        var prog='<span class="time" id="postime">'+ft(sp)+'</span> '+pg(pct,30)+' <span class="time">/ '+ft(sd)+'</span>';
-        if(S._lastProg!==prog){S._lastProg=prog;document.getElementById('npprog').innerHTML=prog}
-        if(S._lastTitle!==title){S._lastTitle=title;document.getElementById('nptitle').textContent=title}
-        if(S._lastArtist!==artist){S._lastArtist=artist;document.getElementById('npartist').textContent=artist}
-        var albStr=album?'['+album+']':'';
-        if(S._lastAlbum!==albStr){S._lastAlbum=albStr;document.getElementById('npalbum').textContent=albStr}
+        S.npTitle=d.title; S._lastArtist=d.artist; S._lastAlbum=d.album||'';
+        S.npStart=Date.now()-sp*1000; S.npDur=sd||0;
+        S._smtcHasArt=!!d.has_art; S._smtcArtVer=d.art_version||0;
 
-        // Album art with art_version cache busting
+        // smtc album art fallback
         var art=document.getElementById('art');
         var artph=document.getElementById('artph');
-        var artVer=d.art_version||0;
-        if(d.has_art&&artVer!==S._artVer&&sp>=1){
-          S._artVer=artVer; S._artShowingPlaceholder=false;
-          art.src='data/album_art.jpg?v='+artVer;
-          // Poll for load completion (more reliable than onload in CEF)
+        if(S._smtcHasArt&&S._smtcArtVer!==S._artVer&&sp>=1){
+          S._artVer=S._smtcArtVer; S._artShowingPlaceholder=false;
+          art.src='data/album_art.jpg?v='+S._smtcArtVer;
           (function poll(){
             if(art.complete){
               if(art.naturalWidth>0){
@@ -220,37 +351,28 @@ setInterval(function () {
             }else{setTimeout(poll,100)}
           })();
         }
-        if(!d.has_art&&!S._artShowingPlaceholder){
+        if(!S._smtcHasArt&&!S._artShowingPlaceholder){
           S._artShowingPlaceholder=true; S._artVer=-1;
           art.style.display='none'; artph.style.display='';
         }
       }else{
         S.npTitle=null; S._artVer=-1; S._artShowingPlaceholder=true;
-        S._lastProg='';S._lastTitle='';S._lastArtist='';S._lastAlbum='';
         document.getElementById('art').style.display='none';
         document.getElementById('artph').style.display='';
-        if(S._lastNpState!=='none'){S._lastNpState='none';
+        if(S._lastSmtcState!=='none'){S._lastSmtcState='none';
           document.getElementById('npprog').innerHTML='<span class="time">--:--</span> no media';
           document.getElementById('nptitle').textContent='';
           document.getElementById('npartist').textContent='';
           document.getElementById('npalbum').textContent='';
         }
       }
-    }catch(e){document.getElementById('npprog').innerHTML='<span style="color:#ff5555">SMTC ERR: '+e.message+'</span>'}
+    }catch(e){}
   };
-  x.onerror=function(){document.getElementById('npprog').innerHTML='<span style="color:#ff5555">SMTC XHR failed ('+x.status+')</span>'};
   x.send();
-  setTimeout(loadNp,1000);
+  setTimeout(loadSmtc,1000);
 })();
 
-// Position ticker (500ms, JS interpolation)
-setInterval(function(){
-  if(!S.npTitle)return;
-  var p=document.getElementById('postime');
-  if(p)p.textContent=ft((Date.now()-S.npStart)/1000);
-},500);
-
-// Update time footer (every 1s, includes EQ debug)
+// ── Update time footer (every 1s) ────────────────────────
 setInterval(function(){
   var n=new Date();
   var ts=n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0')+' '+String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+':'+String(n.getSeconds()).padStart(2,'0');
