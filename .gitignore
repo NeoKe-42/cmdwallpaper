@@ -1,29 +1,28 @@
-# Runtime data (legacy root paths — safety net)
-/data.json
-/data.json.tmp
-/smtc_data.json
-/smtc_data.json.tmp
-/eq_data.json
-/album_art.jpg
-/album_art.png
-/system_info.json
+﻿publish/
+cmdwallpaper_workshop/
+dist/
+out/
+build/
 
-# Runtime data (current data/ paths)
-data/system_info.json
-data/smtc_data.json
-data/eq_data.json
-data/album_art.jpg
-data/album_art.png
-data/*.tmp
+data/*.json
+data/*.jpg
+data/*.png
 data/*.log
-*.pid
-*.log
-*.tmp
-__pycache__/
+data/*.tmp
+data/*.new
+data/*.bak
+data/.net-bundle/
 
-# .NET build artifacts
 bin/
 obj/
+*.exe
+*.pdb
+*.log
 
-# Published agent (build with: dotnet publish -c Release -r win-x64 -o publish)
-publish/
+.claude/
+.DS_Store
+Thumbs.db
+
+# Runtime data in root
+eq_data.json
+smtc_data.json

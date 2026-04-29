@@ -5,37 +5,23 @@ $ParentDir = Split-Path -Parent $ProjectRoot
 $PackageDir = Join-Path $ParentDir "cmdwallpaper_workshop"
 
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "  cmdwallpaper Workshop packager" -ForegroundColor Cyan
+Write-Host "  cmdwallpaper Workshop Packager" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "Project root : $ProjectRoot" -ForegroundColor Gray
 Write-Host "Package dir  : $PackageDir" -ForegroundColor Gray
 Write-Host ""
 
-# ── Check agent exe exists ──────────────────────────────
+# ── Check agent exe exists ────────────────────────────────
 $AgentSrc = Join-Path $ProjectRoot "publish\cmdwallpaper_agent.exe"
 if (-not (Test-Path $AgentSrc)) {
     Write-Host "ERROR: publish\cmdwallpaper_agent.exe not found." -ForegroundColor Red
     Write-Host "Please build it first:" -ForegroundColor Yellow
-    Write-Host "  dotnet publish cmdwallpaper_agent.csproj -c Release -r win-x64 -o publish" -ForegroundColor White
+    Write-Host "  .\scripts\build_agent.ps1" -ForegroundColor White
     exit 1
 }
 Write-Host "[OK] Agent found" -ForegroundColor Green
 
-# ── Git info ────────────────────────────────────────────
-$gitBranch = "unknown"
-$gitCommit = "unknown"
-$gitMessage = "unknown"
-try {
-    $gitBranch = git -C $ProjectRoot branch --show-current 2>$null
-    if (-not $gitBranch) { $gitBranch = "unknown" }
-    $gitCommit = git -C $ProjectRoot rev-parse --short HEAD 2>$null
-    if (-not $gitCommit) { $gitCommit = "unknown" }
-    $gitMessage = git -C $ProjectRoot log -1 --pretty=%s 2>$null
-    if (-not $gitMessage) { $gitMessage = "unknown" }
-} catch { }
-Write-Host "[OK] Branch: $gitBranch, Commit: $gitCommit" -ForegroundColor Green
-
-# ── Clean old package dir ───────────────────────────────
+# ── Clean old package dir ─────────────────────────────────
 if (Test-Path $PackageDir) {
     Remove-Item $PackageDir -Recurse -Force -ErrorAction Stop
     Write-Host "[OK] Removed old package dir" -ForegroundColor Green
@@ -44,7 +30,7 @@ if (Test-Path $PackageDir) {
 New-Item -ItemType Directory -Path $PackageDir -Force | Out-Null
 Write-Host "[OK] Created $PackageDir" -ForegroundColor Green
 
-# ── Helper: copy file (preserve relative path) ──────────
+# ── Helper: copy file (preserve relative path) ────────────
 function Copy-PkgFile($src, $dst) {
     $dstDir = Split-Path -Parent $dst
     if (-not (Test-Path $dstDir)) {
@@ -54,13 +40,13 @@ function Copy-PkgFile($src, $dst) {
     Write-Host "  + $(Resolve-Path $src -Relative)" -ForegroundColor Gray
 }
 
-# ── Copy root files ─────────────────────────────────────
+# ── Copy root files ───────────────────────────────────────
 Write-Host ""
 Write-Host "Copying root files..." -ForegroundColor Yellow
 $rootFiles = @(
     "wallpaper.html", "project.json", "README.md",
     "install.ps1", "uninstall.ps1", "run_agent.ps1",
-    "start_service.vbs", "cmdwallpaper_agent.cs", "cmdwallpaper_agent.csproj"
+    "start_service.vbs"
 )
 foreach ($f in $rootFiles) {
     $src = Join-Path $ProjectRoot $f
@@ -72,7 +58,7 @@ foreach ($f in $rootFiles) {
     }
 }
 
-# ── Copy assets/ ────────────────────────────────────────
+# ── Copy assets/ ──────────────────────────────────────────
 Write-Host "Copying assets/..." -ForegroundColor Yellow
 $srcAssets = Join-Path $ProjectRoot "assets"
 $dstAssets = Join-Path $PackageDir "assets"
@@ -83,7 +69,7 @@ if (Test-Path $srcAssets) {
     }
 }
 
-# ── Copy data/.gitkeep ──────────────────────────────────
+# ── Copy data/.gitkeep ────────────────────────────────────
 Write-Host "Copying data/.gitkeep..." -ForegroundColor Yellow
 $srcGitkeep = Join-Path $ProjectRoot "data\.gitkeep"
 $dstDataDir = Join-Path $PackageDir "data"
@@ -92,64 +78,18 @@ if (Test-Path $srcGitkeep) {
     Copy-PkgFile $srcGitkeep (Join-Path $dstDataDir ".gitkeep")
 }
 
-# ── Copy entire publish/ directory (exe + runtime deps) ──
-Write-Host "Copying publish/..." -ForegroundColor Yellow
-$srcPublish = Join-Path $ProjectRoot "publish"
+# ── Copy agent exe ────────────────────────────────────────
+Write-Host "Copying agent exe..." -ForegroundColor Yellow
 $dstPublish = Join-Path $PackageDir "publish"
-Copy-Item $srcPublish $dstPublish -Recurse -Force
-# Remove debug symbols to save space
-Get-ChildItem $dstPublish -Recurse -Filter "*.pdb" -ErrorAction SilentlyContinue | Remove-Item -Force
-Get-ChildItem $dstPublish -Recurse -Filter "*.xml" -ErrorAction SilentlyContinue | Remove-Item -Force
-Get-ChildItem $dstPublish -Recurse -File | ForEach-Object {
-    Write-Host "  + $(Resolve-Path $_.FullName -Relative)" -ForegroundColor Gray
-}
+New-Item -ItemType Directory -Path $dstPublish -Force | Out-Null
+Copy-PkgFile $AgentSrc (Join-Path $dstPublish "cmdwallpaper_agent.exe")
 
-# ── Post-check: verify agent exe in package ──────────────
-$pkgAgent = Join-Path $dstPublish "cmdwallpaper_agent.exe"
-if (-not (Test-Path $pkgAgent)) {
-    Write-Host "" -ForegroundColor Red
-    Write-Host "ERROR: Agent exe missing from package!" -ForegroundColor Red
-    Write-Host "  $pkgAgent" -ForegroundColor Red
-    exit 1
-}
-Write-Host ""
-Write-Host "Agent included:" -ForegroundColor Green
-Write-Host "  $pkgAgent" -ForegroundColor Gray
+# ── Generate .txt wrappers for Workshop filter bypass ─────
+Write-Host "Generating .txt wrappers..." -ForegroundColor Yellow
+Copy-Item (Join-Path $dstPublish "cmdwallpaper_agent.exe") (Join-Path $dstPublish "cmdwallpaper_agent.exe.txt") -Force
+Write-Host "  + publish/cmdwallpaper_agent.exe.txt" -ForegroundColor Gray
 
-$publishFileCount = (Get-ChildItem $dstPublish -Recurse -File | Measure-Object).Count
-Write-Host "  + $publishFileCount publish files" -ForegroundColor Gray
-
-# ── Generate helper .bat files in package root ───────────
-Write-Host "Generating helper .bat files..." -ForegroundColor Yellow
-
-@"
-@echo off
-cd /d "%~dp0"
-title CMD Wallpaper Helper Installer
-echo ================================
-echo CMD Wallpaper Helper Installer
-echo ================================
-echo.
-powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0install.ps1"
-echo.
-pause
-"@ | Out-File -FilePath (Join-Path $PackageDir "Install Helper.bat") -Encoding ASCII
-Write-Host "  + Install Helper.bat" -ForegroundColor Gray
-
-@"
-@echo off
-cd /d "%~dp0"
-title CMD Wallpaper Helper Uninstaller
-echo ================================
-echo CMD Wallpaper Helper Uninstaller
-echo ================================
-echo.
-powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0uninstall.ps1"
-echo.
-pause
-"@ | Out-File -FilePath (Join-Path $PackageDir "Uninstall Helper.bat") -Encoding ASCII
-Write-Host "  + Uninstall Helper.bat" -ForegroundColor Gray
-
+# START_HERE.bat.txt
 @"
 @echo off
 cd /d "%~dp0"
@@ -198,73 +138,49 @@ if "%choice%"=="4" (
 )
 if "%choice%"=="0" exit /b
 goto menu
-"@ | Out-File -FilePath (Join-Path $PackageDir "START_HERE.bat") -Encoding ASCII
-Write-Host "  + START_HERE.bat" -ForegroundColor Gray
+"@ | Out-File -FilePath (Join-Path $PackageDir "START_HERE.bat.txt") -Encoding ASCII
+Write-Host "  + START_HERE.bat.txt" -ForegroundColor Gray
 
-# ── Generate BUILD_INFO.txt ─────────────────────────────
-Write-Host ""
-Write-Host "Generating BUILD_INFO.txt..." -ForegroundColor Yellow
-$buildTime = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+# Install Helper.bat.txt
+@"
+@echo off
+cd /d "%~dp0"
+title CMD Wallpaper Helper Installer
+echo ================================
+echo CMD Wallpaper Helper Installer
+echo ================================
+echo.
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0install.ps1"
+echo.
+pause
+"@ | Out-File -FilePath (Join-Path $PackageDir "Install Helper.bat.txt") -Encoding ASCII
+Write-Host "  + Install Helper.bat.txt" -ForegroundColor Gray
 
-$buildInfo = @"
-CMD Wallpaper Workshop Package
-==============================
+# Uninstall Helper.bat.txt
+@"
+@echo off
+cd /d "%~dp0"
+title CMD Wallpaper Helper Uninstaller
+echo ================================
+echo CMD Wallpaper Helper Uninstaller
+echo ================================
+echo.
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0uninstall.ps1"
+echo.
+pause
+"@ | Out-File -FilePath (Join-Path $PackageDir "Uninstall Helper.bat.txt") -Encoding ASCII
+Write-Host "  + Uninstall Helper.bat.txt" -ForegroundColor Gray
 
-Package path:
-$PackageDir
+# ── Verify agent exe in package ───────────────────────────
+$pkgAgent = Join-Path $dstPublish "cmdwallpaper_agent.exe"
+if (-not (Test-Path $pkgAgent)) {
+    Write-Host ""
+    Write-Host "ERROR: Agent exe missing from package!" -ForegroundColor Red
+    Write-Host "  $pkgAgent" -ForegroundColor Red
+    exit 1
+}
 
-Source repository:
-$ProjectRoot
-
-Git branch:
-$gitBranch
-
-Git commit:
-$gitCommit
-
-Git commit message:
-$gitMessage
-
-Build time:
-$buildTime
-
-Included:
-- wallpaper.html
-- project.json
-- README.md
-- install.ps1
-- uninstall.ps1
-- run_agent.ps1
-- start_service.vbs
-- Install Helper.bat (generated)
-- Uninstall Helper.bat (generated)
-- START_HERE.bat (generated)
-- cmdwallpaper_agent.cs
-- cmdwallpaper_agent.csproj
-- assets/
-- data/.gitkeep
-- publish/ (entire directory, agent exe + runtime dependencies)
-- .bat helper files (generated during packaging)
-
-Excluded:
-- data/*.json
-- data/*.jpg
-- data/*.png
-- data/*.log
-- data/*.tmp
-- .git/
-- bin/
-- obj/
-- audio_probe/
-- scripts/
-- *.log
-- *.tmp
-"@
-
-$buildInfo | Out-File -FilePath (Join-Path $PackageDir "BUILD_INFO.txt") -Encoding UTF8
-Write-Host "[OK] BUILD_INFO.txt created" -ForegroundColor Green
-
-# ── Done ────────────────────────────────────────────────
+# ── Done ──────────────────────────────────────────────────
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "  Workshop package created successfully." -ForegroundColor Green
@@ -272,7 +188,9 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Package path : $PackageDir" -ForegroundColor Gray
 Write-Host "Source path  : $ProjectRoot" -ForegroundColor Gray
-Write-Host "Branch       : $gitBranch" -ForegroundColor Gray
-Write-Host "Commit       : $gitCommit" -ForegroundColor Gray
 Write-Host ""
 Write-Host "Import project.json from the package folder into Wallpaper Engine." -ForegroundColor White
+Write-Host ""
+Write-Host "Workshop note:" -ForegroundColor Yellow
+Write-Host "  .bat and .exe files have .txt suffix for Workshop filter bypass." -ForegroundColor Gray
+Write-Host "  Users must rename them back after downloading." -ForegroundColor Gray

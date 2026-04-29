@@ -1,141 +1,122 @@
 # CMD Wallpaper
 
-一个终端风格的 Wallpaper Engine 壁纸，配色参考 One Dark Pro，界面参考 neofetch / Windows Terminal。
+A terminal-style Wallpaper Engine web wallpaper with system info, media display, album art, playback progress, and audio visualizer.
 
-订阅后直接应用即可，默认就能显示：
+## Features
 
-- 当前播放的音乐
-- 歌手 / 专辑
-- 专辑封面
-- 播放进度
-- 跟随音乐跳动的 EQ
-- ```
-  部分播放器可能不会向 Windows 暴露完整媒体信息。网易云音乐客户端通常可以触发 EQ，但可能无法提供专辑封面和播放进度。建议使用QQ音乐或网易云网页版。
-  ```
+- Terminal / One Dark Pro style
+- Native media title / artist / album
+- Album art
+- Playback progress
+- Audio responsive EQ
+- Optional system info helper
+- CPU / GPU / RAM / Disk / Network / OS info
 
-  
+## For Users
 
----
+Subscribe or import the wallpaper to get started. Basic media features work out of the box.
 
-## 显示电脑硬件信息
+### System info helper (optional)
 
-CPU、GPU、内存、磁盘、网络这些信息需要额外启用本地 helper。
+To see CPU, GPU, RAM, and other system info:
 
-原因很简单：Wallpaper Engine 的网页壁纸不能直接读取 Windows 系统信息，所以需要一个本地小程序把信息写到壁纸目录里的 `data` 文件夹。
+1. Right-click the wallpaper in Wallpaper Engine
+2. Open in Explorer
+3. Enable file name extensions in Windows Explorer
+4. Rename the `.bat.txt` files to `.bat`:
+   - `START_HERE.bat.txt` → `START_HERE.bat`
+   - `Install Helper.bat.txt` → `Install Helper.bat`
+   - `Uninstall Helper.bat.txt` → `Uninstall Helper.bat`
+5. In the `publish` folder, rename:
+   - `cmdwallpaper_agent.exe.txt` → `cmdwallpaper_agent.exe`
+6. Double-click `START_HERE.bat`
+7. Select Install helper
+8. Reload the wallpaper
 
----
+### Media support
 
-## 安装 helper
+Some players may not expose full media information to Windows:
 
-1. 在 Wallpaper Engine 里右键这个壁纸。
-2. 点“在资源管理器中打开”。
-3. 先打开 Windows 的“文件扩展名”显示。
+- NetEase Cloud Music desktop client may only trigger EQ (no cover art or progress)
+- NetEase Cloud Music web, Bilibili web, and Apple Music work well for media info
 
-Windows 11：
+## For Developers
 
-查看 → 显示 → 文件扩展名
+### Build the agent
 
-Windows 10：
+```powershell
+.\scripts\build_agent.ps1
+```
 
-查看 → 勾选“文件扩展名”
+This compiles a self-contained `publish/cmdwallpaper_agent.exe`.
 
-4. 把这些文件名改回来：
+### Package for Workshop
 
-START_HERE.bat.txt → START_HERE.bat  
-Install Helper.bat.txt → Install Helper.bat  
-Uninstall Helper.bat.txt → Uninstall Helper.bat  
+```powershell
+.\scripts\package_workshop.ps1
+```
 
-5. 进入 `publish` 文件夹，把：
+This creates a clean `../cmdwallpaper_workshop` directory ready for Wallpaper Engine import.
 
-cmdwallpaper_agent.exe.txt → cmdwallpaper_agent.exe
+Requires `publish/cmdwallpaper_agent.exe` to exist. Run `build_agent.ps1` first if needed.
 
-6. 回到壁纸根目录，双击：
+## Project Structure
 
-START_HERE.bat
+| File | Purpose |
+|---|---|
+| `wallpaper.html` | Wallpaper Engine web wallpaper (main UI) |
+| `project.json` | Wallpaper Engine project config |
+| `cmdwallpaper_agent.cs` | Native system info collector (C#) |
+| `cmdwallpaper_agent.csproj` | .NET project file for the agent |
+| `install.ps1` | Helper install script |
+| `uninstall.ps1` | Helper uninstall script |
+| `run_agent.ps1` | Run helper once in foreground |
+| `start_service.vbs` | Silent background launcher |
+| `assets/` | Static assets (album art placeholder, etc.) |
+| `data/.gitkeep` | Runtime data directory placeholder |
+| `scripts/build_agent.ps1` | Compile the helper agent |
+| `scripts/package_workshop.ps1` | Generate Workshop-ready package |
+| `tools/audio_probe/` | Audio probe wallpaper for diagnostics |
 
-然后选择安装 helper。
+## Privacy
 
-也可以直接双击：
+The helper works entirely offline. It writes to the local `data/` folder only and does not upload any data.
 
-Install Helper.bat
+It may create these files in `data/`:
 
-装完后重新加载壁纸，就能看到 CPU / GPU / 内存 / 磁盘等信息。
+- `system_info.json` — CPU, GPU, RAM, disk, network, OS info
+- `smtc_data.json` — current media playback info
+- `album_art.jpg` — current album art
+- `cmdwallpaper_agent.log` — agent log
 
----
+These may contain computer name, username, LAN IP, hardware info, and currently playing media. Media, cover art, progress, and EQ remain available without the helper.
 
-## 重启后要重新安装吗？
+## Troubleshooting
 
-一般不用。
+### EQ not moving
 
-安装成功后，helper 会自动加入开机启动。以后重启电脑，系统信息会自动更新。
+Check that audio is playing and Wallpaper Engine is not muted in Windows Volume Mixer. The footer should show `EQ:WE-AUDIO` when working.
 
-只有这些情况需要重新安装：
+### Album art not showing
 
-- 重新订阅了壁纸
-- Wallpaper Engine 的壁纸目录变了
-- 运行过卸载
-- 系统信息突然不显示了
+Some players or songs do not provide cover art. Try a different song or restart Wallpaper Engine.
 
----
+### System info not showing
 
-## 卸载 helper
+The helper is not installed or not running. Follow the install steps and make sure file extensions are renamed correctly.
 
-打开壁纸目录，双击：
+### PowerShell not in PATH
 
-Uninstall Helper.bat
+If you see "powershell is not recognized", add `C:\Windows\System32\WindowsPowerShell\v1.0` to your system PATH, or run the scripts from an elevated PowerShell prompt directly.
 
-卸载后音乐、封面、播放进度和 EQ 仍然能用，只是不再显示硬件信息。
+### Windows SmartScreen warning
 
----
+Windows may show a warning when running the helper for the first time. Click "More info" then "Run anyway".
 
-## 常见问题
+### Do I need to reinstall after reboot?
 
-### 看不到 CPU / GPU / 内存？
+No. Once installed, the helper starts automatically on boot. You only need to reinstall if you re-subscribe to the wallpaper, move the wallpaper directory, or run the uninstaller.
 
-说明 helper 没装，或者没有运行成功。按上面的步骤改名并运行 `START_HERE.bat`。
+## License
 
-### 双击 bat 没反应？
-
-大概率是文件名其实还是 `.bat.txt`。  
-请先打开“文件扩展名”显示，再确认文件名。
-
-### 提示找不到 agent？
-
-检查：
-
-publish\cmdwallpaper_agent.exe
-
-如果它还是 `cmdwallpaper_agent.exe.txt`，把最后的 `.txt` 去掉。
-
-### EQ 不动？
-
-检查是否正在播放音乐。  
-再确认 Wallpaper Engine 没被 Windows 音量混合器静音。  
-正常情况下底部会显示 `EQ:WE-AUDIO`。
-
-### 专辑封面不显示？
-
-有些播放器或歌曲本身不提供封面。换一首歌或者重启 Wallpaper Engine 试试。
-
----
-
-## 隐私
-
-helper 只在本地工作，不会上传数据。
-
-它可能会在壁纸目录下生成这些文件：
-
-data/system_info.json  
-data/smtc_data.json  
-data/album_art.jpg  
-data/cmdwallpaper_agent.log  
-
-里面可能包含电脑名、用户名、局域网 IP、硬件信息和当前播放信息。
-
-介意的话可以不装 helper。音乐、封面、播放进度和 EQ 仍然可用。
-
----
-
-## 项目地址
-
-https://github.com/NeoKe-42/cmdwallpaper
+MIT
